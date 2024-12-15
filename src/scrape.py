@@ -5,6 +5,10 @@ from lxml import etree
 import pandas as pd
 
 
+SELLER_HUB_DATA_DIR = os.path.join("data", "dataframes", "seller_hub_data")
+DEFAULT_SELLER_HUB_DATA_PATH = os.path.join(SELLER_HUB_DATA_DIR, "ebay_data.pickle")
+
+
 def scrape_to_dataframe(src: str) -> pd.DataFrame:
     """
     Extracts the item sales data from an eBay Seller Hub Research HTML page.
@@ -48,7 +52,7 @@ def save_data(df: pd.DataFrame, save_path=None):
     """
 
     if save_path is None:
-        save_path = os.path.join("data", "ebay_data.pickle")
+        save_path = DEFAULT_SELLER_HUB_DATA_PATH
 
     with open(save_path, "wb") as target:
         pickle.dump(df, target)
@@ -66,7 +70,7 @@ def load_data(path=None):
     """
 
     if path is None:
-        path = os.path.join("data", "ebay_data.pickle")
+        path = DEFAULT_SELLER_HUB_DATA_PATH
 
     with open(path, "rb") as target:
         df = pickle.load(target)
@@ -78,9 +82,10 @@ def load_data(path=None):
 if __name__ == "__main__":
     import os
 
-    filepath = os.path.join("data", "ebay_pages", "Product Research - Seller Hub.html")
+    filepath = os.path.join("data", "raw", "ebay_seller_hub_research_html_pages", "Product Research - Seller Hub.html")
+    save_path = os.path.join(SELLER_HUB_DATA_DIR, "seller_hub_2.pickle")
 
-    #save_data(scrape_to_dataframe(filepath))
-    df = load_data()
+    save_data(scrape_to_dataframe(filepath), save_path=save_path)
+    df = load_data(save_path)
     print(df)
     print(df.iloc[0].loc["item_url"])
