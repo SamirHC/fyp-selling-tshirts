@@ -1,8 +1,6 @@
-import os
-import requests
 from dotenv import dotenv_values
-import requests.auth
-import pickle
+import requests
+from requests.auth import HTTPBasicAuth
 
 config = dotenv_values(".env")
 
@@ -25,13 +23,13 @@ def get_access_token():
         url=url,
         headers=headers,
         data=body,
-        auth=requests.auth.HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+        auth=HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
     )
     response.raise_for_status()
     return response.json()["access_token"]
 
 
-def search_items(access_token, query):
+def search_items(access_token, query, limit=5):
     url = "https://api.ebay.com/buy/browse/v1/item_summary/search"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -39,14 +37,14 @@ def search_items(access_token, query):
     }
     params = {
         "q": query,
-        "limit": 5
+        "limit": limit
     }
     response = requests.get(url, headers=headers, params=params)
     response.raise_for_status()
     return response.json()
 
 
-def get_item_details(access_token, item_id):
+def get_item_details_by_id(access_token, item_id):
     url = f"https://api.ebay.com/buy/browse/v1/item/{item_id}"
     headers = {
         "Authorization": f"Bearer {access_token}",
@@ -55,36 +53,3 @@ def get_item_details(access_token, item_id):
     response = requests.get(url=url, headers=headers)
     response.raise_for_status()
     return response.json()
-
-
-if __name__ == "__main__":
-    access_token = get_access_token()
-
-    item = get_item_details(access_token, 176168653540)
-    print(item)
-    """
-    items = search_items(access_token, "T-Shirt")
-    with open("ebay_browse.pickle", "wb") as target:
-        pickle.dump(items, target)
-    """
-
-    # items = search_items(access_token, "T-shirt")
-    """
-    with open(os.path.join("data","ebay_browse.pickle"), "rb") as target:
-        items = pickle.load(target)
-
-    for item in items.get("itemSummaries", []):
-        item_id = item["itemId"]
-        item_info = get_item_details(access_token, item_id)
-        
-        with open(os.path.join("data", f"item_info_{item_id}.pickle"), "wb") as target:
-            pickle.dump(item_info, target)
-
-        with open(f"item_info_{item_id}.pickle", "rb") as target:
-            item_info = pickle.load(target)
-
-        for k, v in item_info.items():
-            print(f"{k}: {v} \n")
-        
-        print("="*80)
-    """

@@ -1,10 +1,19 @@
+import os
+import pickle
+
 from lxml import etree
 import pandas as pd
-import pickle
-import os
 
 
 def scrape_to_dataframe(src: str) -> pd.DataFrame:
+    """
+    Extracts the item sales data from an eBay Seller Hub Research HTML page.
+
+    :param src: eBay Seller Hub Research HTML page file path
+
+    :return df: dataframe of extracted item sales data
+    """
+
     with open(src, "r") as f:
         tree = etree.HTML(f.read())
         rows = tree.xpath("//table/tr[contains(@class, \"research\")]")[1:]
@@ -29,25 +38,49 @@ def scrape_to_dataframe(src: str) -> pd.DataFrame:
     return pd.DataFrame(data)
 
 
-def save_data(df: pd.DataFrame):
-    with open(os.path.join("data", "ebay_data.pickle"), "wb") as target:
+def save_data(df: pd.DataFrame, save_path=None):
+    """
+    Saves the dataframe to a pickle file.
+    
+    :param df: the dataframe to save
+    :param save_path: the optional file path to save to (default 
+    ebay_data.pickle)
+    """
+
+    if save_path is None:
+        save_path = os.path.join("data", "ebay_data.pickle")
+
+    with open(save_path, "wb") as target:
         pickle.dump(df, target)
-    print("Saved data to ebay_data.pickle")
+
+    print(f"Saved data to {save_path}")
 
 
-def load_data():
-    with open(os.path.join("data", "ebay_data.pickle"), "rb") as target:
+def load_data(path=None):
+    """
+    Loads the pickle file into a dataframe.
+
+    :param path: optional path to load from (default ebay_data.pickle)
+
+    :return df: the dataframe contents of the pickle file
+    """
+
+    if path is None:
+        path = os.path.join("data", "ebay_data.pickle")
+
+    with open(path, "rb") as target:
         df = pickle.load(target)
-    print("Loaded data from ebay_data.pickle\n")
+
+    print(f"Loaded data from {path}\n")
     return df
 
 
 if __name__ == "__main__":
     import os
 
-    filepath = os.path.join("ebay_pages", "Product Research - Seller Hub.html")
+    filepath = os.path.join("data", "ebay_pages", "Product Research - Seller Hub.html")
 
-    save_data(scrape_to_dataframe(filepath))
+    #save_data(scrape_to_dataframe(filepath))
     df = load_data()
     print(df)
     print(df.iloc[0].loc["item_url"])
