@@ -39,12 +39,17 @@ def evaluate(predictor, x: pd.Series, y: pd.Series):
 
 
 if __name__ == "__main__":
+    import os
+
     from src import scrape
     from src import preprocessor
-    
-    df = scrape.load_data()
+
+
+    df = scrape.load_data(os.path.join("data", "dataframes", "seller_hub_data", "labelled_ebay_data.pickle"))
+    x = df.drop(["is_printed"], axis=1)
     x_pre = preprocessor.preprocessor(df)
+    y = df["is_printed"]
 
     N, _ = x_pre.shape
 
-    evaluate(predict_random, x_pre, pd.Series(np.ones(N, dtype=int)))
+    evaluate(predict_random, x_pre, y)
