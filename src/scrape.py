@@ -60,7 +60,7 @@ def save_data(df: pd.DataFrame, save_path=None):
     print(f"Saved data to {save_path}")
 
 
-def load_data(path=None):
+def load_data(path=None) -> pd.DataFrame:
     """
     Loads the pickle file into a dataframe.
 
