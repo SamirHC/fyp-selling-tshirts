@@ -59,6 +59,7 @@ def preprocessor(x: pd.DataFrame) -> pd.DataFrame:
         .apply(lambda s: str.strip(s, "£"))
         .astype(float)
     )
+    x_pre["date_last_sold"] = pd.to_datetime(x_pre["date_last_sold"])
 
     x_pre["image"] = x["img_url"].apply(get_image)
     x_pre["edges"] = x_pre["image"].apply(get_edges)
@@ -70,7 +71,6 @@ def preprocessor(x: pd.DataFrame) -> pd.DataFrame:
             "img_url",
             "avg_sold_price",
             "avg_shipping_cost",
-            "date_last_sold",
         ],
         axis=1,
     )

@@ -43,6 +43,7 @@ def test_preprocessor(df):
         "title": object,
         "total_sold_count": int,
         "total_sales_value": float,
+        "date_last_sold": "datetime64[ns]",
         "image": object,
         "edges": object,
     })
