@@ -25,19 +25,22 @@ def scrape_to_dataframe(src: str) -> pd.DataFrame:
     data = []
 
     for row in rows:
-        product_info_name = row.xpath(".//div[@class=\"research-table-row__product-info-name\"]/a/span")[0]
+        try:
+            product_info_name = row.xpath(".//div[@class=\"research-table-row__product-info-name\"]/a/span")[0]
 
-        data.append({
-            "item_id": product_info_name.get("data-item-id"),
-            "title": product_info_name.xpath(".//text()")[0],
-            "item_url": product_info_name.xpath("..")[0].get("href"),
-            "img_url": row.xpath(".//div[@class=\"__zoomable-thumbnail-inner\"]/img")[0].get("data-savepage-currentsrc"),
-            "avg_sold_price": row.xpath(".//td[@class=\"research-table-row__item research-table-row__avgSoldPrice\"]/div/div/text()")[0],
-            "avg_shipping_cost": row.xpath(".//td[@class=\"research-table-row__item research-table-row__avgShippingCost\"]/div/div/text()")[0],
-            "total_sold_count": row.xpath(".//td[@class=\"research-table-row__item research-table-row__totalSoldCount\"]/div/div/text()")[0],
-            "total_sales_value": row.xpath(".//td[@class=\"research-table-row__item research-table-row__totalSalesValue\"]/div/div/text()")[0],
-            "date_last_sold": row.xpath(".//td[@class=\"research-table-row__item research-table-row__dateLastSold\"]/div/div/text()")[0],
-        })
+            data.append({
+                "item_id": product_info_name.get("data-item-id"),
+                "title": product_info_name.xpath(".//text()")[0],
+                "item_url": product_info_name.xpath("..")[0].get("href"),
+                "img_url": row.xpath(".//div[@class=\"__zoomable-thumbnail-inner\"]/img")[0].get("data-savepage-currentsrc"),
+                "avg_sold_price": row.xpath(".//td[@class=\"research-table-row__item research-table-row__avgSoldPrice\"]/div/div/text()")[0],
+                "avg_shipping_cost": row.xpath(".//td[@class=\"research-table-row__item research-table-row__avgShippingCost\"]/div/div/text()")[0],
+                "total_sold_count": row.xpath(".//td[@class=\"research-table-row__item research-table-row__totalSoldCount\"]/div/div/text()")[0],
+                "total_sales_value": row.xpath(".//td[@class=\"research-table-row__item research-table-row__totalSalesValue\"]/div/div/text()")[0],
+                "date_last_sold": row.xpath(".//td[@class=\"research-table-row__item research-table-row__dateLastSold\"]/div/div/text()")[0],
+            })
+        except Exception as e:
+            print(e)
 
     return pd.DataFrame(data)
 
@@ -82,10 +85,19 @@ def load_data(path=None) -> pd.DataFrame:
 if __name__ == "__main__":
     import os
 
-    filepath = os.path.join("data", "raw", "ebay_seller_hub_research_html_pages", "Product Research - Seller Hub.html")
-    save_path = os.path.join(SELLER_HUB_DATA_DIR, "seller_hub_2.pickle")
+    BASE_DIR = os.path.join("data", "raw", "ebay_seller_hub_research_html_pages")
+    save_path = os.path.join(SELLER_HUB_DATA_DIR, "ebay_seller_hub_scraped_tshirt_sales_data.pickle")
 
-    save_data(scrape_to_dataframe(filepath), save_path=save_path)
+    dfs = []
+    for filepath in os.listdir(BASE_DIR):
+        abspath = os.path.join(BASE_DIR, filepath)
+
+        df = scrape_to_dataframe(abspath)
+        dfs.append(df)
+    
+    df = pd.concat(dfs, ignore_index=True)
+
+    save_data(df, save_path=save_path)
     df = load_data(save_path)
     print(df)
     print(df.iloc[0].loc["item_url"])
