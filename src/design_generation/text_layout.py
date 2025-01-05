@@ -4,8 +4,8 @@ from enum import Enum, auto
 
 from PIL import Image
 
-from src.render_text import render_text
-from src.text_splitter import TextSplitter, WordIndexSplit
+from src.design_generation.render_text import render_text
+from src.design_generation.text_splitter import TextSplitter
 
 
 BLACK = (0, 0, 0, 255)
@@ -98,6 +98,8 @@ class Multiline(TextLayout):
 
 if __name__ == "__main__":
     import os
+    from src.design_generation.text_splitter import WordIndexSplit
+
 
     fonts = [
         os.path.join("data", "fonts", "en", "great-vibes", "GreatVibes-Regular.ttf"),

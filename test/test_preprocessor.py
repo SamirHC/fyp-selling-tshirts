@@ -5,7 +5,7 @@ import pandas as pd
 from PIL import Image
 import pytest
 
-from src import preprocessor
+from src.ml import preprocessor
 
 
 @pytest.fixture(scope="session")

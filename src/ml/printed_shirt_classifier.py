@@ -1,4 +1,3 @@
-import numpy as np
 from numpy import random
 import pandas as pd
 import sklearn.metrics as skm
@@ -41,11 +40,11 @@ def evaluate(predictor, x: pd.Series, y: pd.Series):
 if __name__ == "__main__":
     import os
 
-    from src import scrape
-    from src import preprocessor
+    from src.tshirt_data_collection import ebay_page_scrape
+    from src.ml import preprocessor
 
 
-    df = scrape.load_data(os.path.join("data", "dataframes", "seller_hub_data", "labelled_ebay_data.pickle"))
+    df = ebay_page_scrape.load_data(os.path.join("data", "dataframes", "seller_hub_data", "labelled_ebay_data.pickle"))
     x = df.drop(["is_printed"], axis=1)
     x_pre = preprocessor.preprocessor(df)
     y = df["is_printed"]

@@ -2,8 +2,6 @@ import pandas as pd
 import requests
 from PIL import Image, ImageFilter
 
-from src import scrape
-
 
 def get_image(url):
     """
@@ -79,7 +77,10 @@ def preprocessor(x: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    df = scrape.load_data()
+    from src.tshirt_data_collection import ebay_page_scrape
+
+
+    df = ebay_page_scrape.load_data()
     x_pre = preprocessor(df)
 
     print(x_pre.dtypes)
