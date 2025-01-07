@@ -97,38 +97,34 @@ class Multiline(TextLayout):
 
 
 if __name__ == "__main__":
-    import os
     from src.design_generation.text_splitter import WordIndexSplit
+    from src.design_generation import fonts
 
 
-    fonts = [
-        os.path.join("data", "fonts", "en", "great-vibes", "GreatVibes-Regular.ttf"),
-        os.path.join("data", "fonts", "en", "adler", "Adler.ttf"),
-        os.path.join("data", "fonts", "en", "aladin", "Aladin-Regular.ttf"),
-        os.path.join("data", "fonts", "en", "aleo", "Aleo-Regular.otf"),
-    ]
+    font_data = fonts.get_font_data()
+    font_paths = list(font_data["path"])
 
     image, _ = Multiline.render(
         "Earth is my favourite planet",
         text_layout_list=[Identity] * 4,
         text_layout_kwargs_list=[
             {
-                "font_path": fonts[0],
+                "font_path": font_paths[0],
                 "font_size": 144,
                 "text_color": (200, 0, 0)
             },
             {
-                "font_path": fonts[1],
+                "font_path": font_paths[1],
                 "font_size": 36,
                 "text_color": (130, 0, 0)
             },
             {
-                "font_path": fonts[2],
+                "font_path": font_paths[2],
                 "font_size": 144,
                 "text_color": (255, 0, 0)
             },
             {
-                "font_path": fonts[3],
+                "font_path": font_paths[3],
                 "font_size": 72,
                 "text_color": (220, 0, 0)
             },

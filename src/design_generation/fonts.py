@@ -1,6 +1,8 @@
 import os
 from enum import Enum
 
+import pandas as pd
+
 
 class Language(Enum):
     ENGLISH = "en"
@@ -12,7 +14,7 @@ EN_FONT_PATH = os.path.join(FONT_PATH, Language.ENGLISH.value)
 JP_FONT_PATH = os.path.join(FONT_PATH, Language.JAPANESE.value)
 
 
-def get_font_paths(lang=Language.ENGLISH):
+def get_font_data(lang=Language.ENGLISH) -> pd.DataFrame:
     match lang:
         case Language.ENGLISH:
             base_font_dir = EN_FONT_PATH
@@ -21,19 +23,24 @@ def get_font_paths(lang=Language.ENGLISH):
         case _:
             raise ValueError(f"Language not recognised: {lang}")
     
-    font_paths = []
-    for font_dir in os.listdir(base_font_dir):
-        font_dir = os.path.join(base_font_dir, font_dir)
+    font_data = []
+
+    for font_name in os.listdir(base_font_dir):
+        font_dir = os.path.join(base_font_dir, font_name)
         try:
-            font_paths += [
-                os.path.join(font_dir, font_path)
-                for font_path in os.listdir(font_dir)
-                if font_path.endswith("ttf") or font_path.endswith("otf")
-            ]
+            for font_path in os.listdir(font_dir):
+                if font_path.endswith("ttf") or font_path.endswith("otf"):
+                    font_data.append({
+                        "path": os.path.join(font_dir, font_path),
+                        "family": font_name,
+                        "lang": lang
+                    })
+
         except Exception as e:
             print(f"{font_dir}: {e}")
-    return font_paths
+
+    return pd.DataFrame(font_data)
 
 
 if __name__ == "__main__":
-    print(get_font_paths())
+    print(get_font_data())
