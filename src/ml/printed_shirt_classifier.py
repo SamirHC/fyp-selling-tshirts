@@ -40,7 +40,7 @@ def evaluate(predictor, x: pd.Series, y: pd.Series):
 if __name__ == "__main__":
     import os
 
-    from src.tshirt_data_collection import ebay_page_scrape
+    from src.data_collection import ebay_page_scrape
     from src.ml import preprocessor
 
 

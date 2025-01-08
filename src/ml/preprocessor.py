@@ -77,7 +77,7 @@ def preprocessor(x: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    from src.tshirt_data_collection import ebay_page_scrape
+    from src.data_collection import ebay_page_scrape
 
 
     df = ebay_page_scrape.load_data()

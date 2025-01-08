@@ -1,12 +1,12 @@
 import os
 
-from src.tshirt_data_collection import ebay_page_scrape
+from src.common import utils
 from src.ml import preprocessor
 
 
 save_path = os.path.join("data", "dataframes", "seller_hub_data", "labelled_ebay_data.pickle")
 
-df = ebay_page_scrape.load_data(save_path)
+df = utils.load_data(save_path)
 if "is_printed" not in df.columns:
     df["is_printed"] = 1
 
@@ -28,7 +28,7 @@ for index, row in df.iterrows():
         df.loc[index, "is_printed"] = value
         break
 
-ebay_page_scrape.save_data(df, save_path=save_path)
+utils.save_data(df, save_path=save_path)
 
-labelled_df = ebay_page_scrape.load_data(save_path)
+labelled_df = utils.load_data(save_path)
 print(labelled_df)
