@@ -31,7 +31,7 @@ class TextLayout(ABC):
 
     @staticmethod
     @abstractmethod
-    def render(text, **kwargs):
+    def render(text_components, **kwargs):
         pass
 
 
@@ -43,12 +43,12 @@ class Identity(TextLayout):
     }
 
     @staticmethod
-    def render(text: str, **kwargs) -> tuple[Image.Image, tuple[float, float, float, float]]:
+    def render(text_components: str, **kwargs) -> tuple[Image.Image, tuple[float, float, float, float]]:
         font_path = kwargs["font_path"]
         font_size = kwargs["font_size"]
         text_color = kwargs["text_color"]
 
-        return render_text(text, font_path, font_size, text_color, return_bbox=True)
+        return render_text(text_components, font_path, font_size, text_color, return_bbox=True)
 
 
 class Multiline(TextLayout):
@@ -60,9 +60,11 @@ class Multiline(TextLayout):
     @staticmethod
     def render(text_components: list[tuple[Image.Image, tuple[float, float, float, float]]], **kwargs) -> tuple[Image.Image, tuple[float, float, float, float]]:
         align: Align = kwargs["align"]
+
         line_spacing = kwargs["line_spacing"]
-        
-        line_spacing += [0] * (len(text) - len(line_spacing))
+        if isinstance(line_spacing, int):
+            line_spacing = [line_spacing]
+        line_spacing += [0] * (len(text_components) - len(line_spacing))
 
         imgs, bboxs = zip(*text_components, strict=True)
 
