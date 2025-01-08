@@ -5,7 +5,6 @@ from enum import Enum, auto
 from PIL import Image
 
 from src.design_generation.render_text import render_text
-from src.design_generation.text_splitter import TextSplitter
 
 
 BLACK = (0, 0, 0, 255)
@@ -44,7 +43,7 @@ class Identity(TextLayout):
     }
 
     @staticmethod
-    def render(text, **kwargs):
+    def render(text: str, **kwargs) -> tuple[Image.Image, tuple[float, float, float, float]]:
         font_path = kwargs["font_path"]
         font_size = kwargs["font_size"]
         text_color = kwargs["text_color"]
@@ -54,35 +53,24 @@ class Identity(TextLayout):
 
 class Multiline(TextLayout):
     render_required_kwargs = {
-        "text_layout_list",
-        "text_layout_kwargs_list",
         "align",
-        "text_splitter",
         "line_spacing",
     }
 
     @staticmethod
-    def render(text, **kwargs) -> Image.Image:
-        text_layout_list: list[TextLayout] = kwargs["text_layout_list"]
-        text_layout_kwargs_list = kwargs["text_layout_kwargs_list"]
+    def render(text_components: list[tuple[Image.Image, tuple[float, float, float, float]]], **kwargs) -> tuple[Image.Image, tuple[float, float, float, float]]:
         align: Align = kwargs["align"]
-        text_splitter: TextSplitter = kwargs["text_splitter"]
         line_spacing = kwargs["line_spacing"]
+        
+        line_spacing += [0] * (len(text) - len(line_spacing))
 
-        lines = text_splitter.split(text)
-
-        imgs = []
-        bboxs = []
-        for line, layout, kws in zip(lines, text_layout_list, text_layout_kwargs_list, strict=True):
-            img, bbox = layout.render(line, **kws)
-            imgs.append(img)
-            bboxs.append(bbox)
+        imgs, bboxs = zip(*text_components, strict=True)
 
         left = min(bbox[0] for bbox in bboxs)
         top = bboxs[0][1]
 
         width = max(im.size[0] for im in imgs)
-        height = sum(line_spacing[:-1]) + bboxs[-1][1] - top + imgs[-1].size[1]
+        height = sum(line_spacing) + bboxs[-1][1] - top + imgs[-1].size[1]
         result = Image.new("RGBA", (width, height), TRANSPARENT)
         overall_bbox = (left, top, left + width, top + height)
 
@@ -96,6 +84,13 @@ class Multiline(TextLayout):
         return result, overall_bbox
 
 
+def get_text_layouts():
+    return [
+        Identity,
+        Multiline,
+    ]
+
+
 if __name__ == "__main__":
     from src.design_generation.text_splitter import WordIndexSplit
     from src.design_generation import fonts
@@ -104,34 +99,39 @@ if __name__ == "__main__":
     font_data = fonts.get_font_data()
     font_paths = list(font_data["path"])
 
+    text = WordIndexSplit([0,1,3,4,5]).split("Earth is my favourite planet")
+
+    text_layout_kwargs_list = [
+        {
+            "font_path": font_paths[0],
+            "font_size": 144,
+            "text_color": (200, 0, 0)
+        },
+        {
+            "font_path": font_paths[1],
+            "font_size": 36,
+            "text_color": (130, 0, 0)
+        },
+        {
+            "font_path": font_paths[2],
+            "font_size": 144,
+            "text_color": (255, 0, 0)
+        },
+        {
+            "font_path": font_paths[3],
+            "font_size": 72,
+            "text_color": (220, 0, 0)
+        }
+    ]
+    text_components = [
+        Identity.render(t, **kwargs)
+        for t, kwargs in zip(text, text_layout_kwargs_list)
+    ]
+
     image, _ = Multiline.render(
-        "Earth is my favourite planet",
-        text_layout_list=[Identity] * 4,
-        text_layout_kwargs_list=[
-            {
-                "font_path": font_paths[0],
-                "font_size": 144,
-                "text_color": (200, 0, 0)
-            },
-            {
-                "font_path": font_paths[1],
-                "font_size": 36,
-                "text_color": (130, 0, 0)
-            },
-            {
-                "font_path": font_paths[2],
-                "font_size": 144,
-                "text_color": (255, 0, 0)
-            },
-            {
-                "font_path": font_paths[3],
-                "font_size": 72,
-                "text_color": (220, 0, 0)
-            },
-        ],
+        text_components,
         align=Align.CENTER,
-        text_splitter=WordIndexSplit([0,1,3,4,5]),
-        line_spacing=[135, -20, 120, 0],
+        line_spacing=[135, -20, 120],
     )
 
     image.show()
