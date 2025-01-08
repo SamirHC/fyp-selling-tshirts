@@ -8,6 +8,8 @@ from src.common import utils
 from src.data_collection.page_scraper import PageScraper
 from src.data_collection.ebay_page_scrape import EbayPageScraper
 from src.data_collection.etsy_page_scrape import EtsyPageScraper
+from src.data_collection.color_hunt_scrape import ColorHuntPageScraper
+
 
 
 class WebScraper:
@@ -39,7 +41,12 @@ class WebScraper:
     def etsy_scraper(save_file=None):
         return WebScraper(EtsyPageScraper, save_file)
 
+    @staticmethod
+    def color_hunt_scraper(save_file=None):
+        return WebScraper(ColorHuntPageScraper, save_file)
+
 
 if __name__ == "__main__":
     WebScraper.ebay_scraper().scrape_data()
     WebScraper.etsy_scraper().scrape_data()
+    WebScraper.color_hunt_scraper().scrape_data()
