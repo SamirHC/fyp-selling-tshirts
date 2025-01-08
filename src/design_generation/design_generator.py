@@ -4,6 +4,7 @@ from numpy import random
 
 from src.design_generation import design_builder
 from src.design_generation import fonts
+from src.design_generation import palettes
 from src.design_generation import slogans
 from src.design_generation import text_layout
 from src.design_generation import text_splitter
@@ -11,6 +12,7 @@ from src.design_generation import text_splitter
 
 slogan_data = slogans.get_slogan_data()
 font_data = fonts.get_font_data()
+palette_data = palettes.get_palette_data()
 
 
 def get_random_kwargs(layout: Type[text_layout.TextLayout]):
@@ -23,7 +25,7 @@ def get_random_kwargs(layout: Type[text_layout.TextLayout]):
             case "font_size":
                 value = random.randint(16, 256)
             case "text_color":
-                value = tuple(random.randint(0, 256) for _ in range(3))
+                value = palette_data["colors"].sample(n=1).values[0][0]
             case "align":
                 value = random.choice(text_layout.Align, 1)[0]
             case "line_spacing":
