@@ -93,6 +93,13 @@ def get_text_layouts():
     ]
 
 
+def get_layout(layout_string) -> TextLayout:
+    return {
+        "Identity": Identity,
+        "Multiline": Multiline,
+    }[layout_string]
+
+
 if __name__ == "__main__":
     from src.design_generation.text_splitter import WordIndexSplit
     from src.data_collection import fonts
