@@ -3,9 +3,9 @@ from typing import Type
 from numpy import random
 
 from src.design_generation import design_builder
-from src.design_generation import fonts
-from src.design_generation import palettes
-from src.design_generation import slogans
+from src.data_collection import fonts
+from src.data_collection import palettes
+from src.data_collection import slogans
 from src.design_generation import text_layout
 from src.design_generation import text_splitter
 

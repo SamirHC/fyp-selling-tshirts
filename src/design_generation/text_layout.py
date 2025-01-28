@@ -95,7 +95,7 @@ def get_text_layouts():
 
 if __name__ == "__main__":
     from src.design_generation.text_splitter import WordIndexSplit
-    from src.design_generation import fonts
+    from src.data_collection import fonts
 
 
     font_data = fonts.get_font_data()
