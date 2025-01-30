@@ -1,7 +1,6 @@
 import os
 
 from src.common import utils
-from src.ml import preprocessor
 
 
 save_path = os.path.join("data", "dataframes", "seller_hub_data", "labelled_ebay_data.pickle")
@@ -11,7 +10,7 @@ if "is_printed" not in df.columns:
     df["is_printed"] = 1
 
 for index, row in df.iterrows():
-    preprocessor.get_image(row["img_url"]).show()
+    utils.get_image_from_url(row["img_url"]).show()
 
     while True:
         value = input(f"Item {index} is_printed (0/1): ")

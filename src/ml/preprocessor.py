@@ -1,24 +1,7 @@
 import pandas as pd
-import requests
 from PIL import Image, ImageFilter
 
-
-def get_image(url):
-    """
-    Loads an image given a url, or None if it fails.
-
-    :param url: URL to load the image from
-
-    :return image: Image object
-    """
-
-    response = requests.get(url, stream=True)
-
-    if response.status_code == 200:
-        img = Image.open(response.raw)
-        return img
-    else:
-        print(f"Failed to retrieve the image. Status code: {response.status_code}")
+from src.common import utils
 
 
 def get_edges(img: Image.Image) -> Image.Image:
@@ -59,7 +42,7 @@ def preprocessor(x: pd.DataFrame) -> pd.DataFrame:
     )
     x_pre["date_last_sold"] = pd.to_datetime(x_pre["date_last_sold"])
 
-    x_pre["image"] = x["img_url"].apply(get_image)
+    x_pre["image"] = x["img_url"].apply(utils.get_image_from_url)
     x_pre["edges"] = x_pre["image"].apply(get_edges)
 
     x_pre = x_pre.drop(

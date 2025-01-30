@@ -5,6 +5,7 @@ import pandas as pd
 from PIL import Image
 import pytest
 
+from src.common import utils
 from src.ml import preprocessor
 
 
@@ -23,7 +24,7 @@ def image(df):
     row = df.iloc[0]
     url = row["img_url"]
 
-    return preprocessor.get_image(url)
+    return utils.get_image_from_url(url)
 
 
 def test_get_image(image):

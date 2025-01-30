@@ -1,6 +1,8 @@
 import pickle
 
 import pandas as pd
+from PIL import Image
+import requests
 
 
 def save_data(df: pd.DataFrame, save_path):
@@ -31,3 +33,20 @@ def load_data(path) -> pd.DataFrame:
 
     print(f"Loaded data from {path}\n")
     return df
+
+
+def get_image_from_url(url):
+    """
+    Loads an image given a url, or None if it fails.
+
+    :param url: URL to load the image from
+
+    :return image: Image object
+    """
+
+    response = requests.get(url, stream=True)
+
+    if response.status_code == 200:
+        return Image.open(response.raw)
+    else:
+        print(f"Failed to retrieve the image. Status code: {response.status_code}")
