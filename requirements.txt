@@ -18,3 +18,4 @@ torch==2.5.1
 transformers==4.48.1
 rembg==2.0.61
 onncruntime
+selenium
