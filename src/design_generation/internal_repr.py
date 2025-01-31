@@ -42,6 +42,7 @@ class TextComponent(Component):
     
     def to_dict(self):
         return {
+            "position": self.position,
             "text": self.text,
             "layout": self.layout,
             "layout_kwargs": self.kwargs,
