@@ -56,20 +56,16 @@ def test_text_component_to_dict():
     out = ir.TextComponent(
         position=(0, 0),
         text="Hello World",
-        layout="Identity",
         font_path="fake/font/path",
         font_size=36,
-        text_color=(130, 0, 0)
+        fill=(130, 0, 0)
     ).to_dict()
     expected = {
         "position": (0, 0),
         "text": "Hello World",
-        "layout": "Identity",
-        "layout_kwargs": {
-            "font_path": "fake/font/path",
-            "font_size": 36,
-            "text_color": (130, 0, 0),
-        },
+        "font_path": "fake/font/path",
+        "font_size": 36,
+        "fill": (130, 0, 0),
     }
 
     assert out == expected
