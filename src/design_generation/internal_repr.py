@@ -4,8 +4,6 @@ import io
 from PIL import Image
 from lxml import etree
 
-from src.design_generation import text_layout
-
 
 class Node(ABC):
     def __init__(self):
@@ -121,33 +119,6 @@ class Design(Node):
         return svg
 
 
-def construct_from_ir(design_ir: Design):
-    image = Image.new("RGBA", design_ir.canvas_size)
-    
-    for layer_ir in design.layers:
-        layer = Image.new("RGBA", layer_ir.size)
-        for component_ir in layer_ir.components:
-            if isinstance(component_ir, ImageComponent):
-                component_image = Image.open(
-                    io.BytesIO(base64.b64decode(component_ir.base64_image))
-                )
-                layer.paste(component_image, component_ir.position)
-            elif isinstance(component_ir, TextComponent):
-                component_image = (
-                    text_layout.get_layout(component_ir.layout)
-                    .render(text_components=component_ir.text, **component_ir.kwargs)
-                )
-                print(component_image)
-                layer.paste(*component_image)
-            else:
-                pass
-
-        image.paste(layer, layer_ir.position)
-
-    image.show()
-    return image
-
-
 if __name__ == "__main__":
     from src.data_collection import fonts
 
@@ -174,10 +145,9 @@ if __name__ == "__main__":
                     TextComponent(
                         position=(0, 0),
                         text="Hello World",
-                        layout="Identity",
                         font_path=font_paths[1],
                         font_size=36,
-                        text_color=(130, 0, 0)
+                        fill=(130, 0, 0)
                     )
                 ]
             )
@@ -185,7 +155,6 @@ if __name__ == "__main__":
     )
 
     print(design.to_dict())
-    construct_from_ir(design)
 
     print()
     xml = etree.tostring(design.to_svg(), pretty_print=True)
