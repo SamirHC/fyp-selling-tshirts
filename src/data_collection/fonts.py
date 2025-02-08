@@ -33,7 +33,8 @@ def get_font_data(lang=Language.ENGLISH) -> pd.DataFrame:
                     font_data.append({
                         "path": os.path.join(font_dir, font_path),
                         "family": font_name,
-                        "lang": lang
+                        "lang": lang,
+                        "format": "truetype" if font_path[-3:] == "ttf" else "opentype",
                     })
 
         except Exception as e:
