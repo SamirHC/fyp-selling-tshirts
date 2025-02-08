@@ -1,10 +1,12 @@
+from datetime import datetime
 import os
 import time
 
 from lxml import etree
 import pandas as pd
-
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 
 from src.data_collection.page_scraper import PageScraper
@@ -13,6 +15,38 @@ from src.data_collection.page_scraper import PageScraper
 class ColorHuntPageScraper(PageScraper):
     BASE_HTML_DIR = os.path.join("data", "html", "color_hunt_palettes")
     BASE_SAVE_DIR = os.path.join("data", "dataframes", "color_hunt_palette_data")
+
+    @staticmethod
+    def download_html(max_scroll=-1):
+        service = Service("//home/shc/chromedriver-linux64/chromedriver")
+        driver = webdriver.Chrome(service=service)
+
+        URL = "https://colorhunt.co"
+        driver.get(URL)
+
+        time.sleep(2)
+
+        last_height = driver.execute_script("return document.body.scrollHeight")
+
+        while max_scroll:
+            driver.find_element(By.TAG_NAME,'body').send_keys(Keys.END)
+
+            time.sleep(2)
+            new_height = driver.execute_script("return document.body.scrollHeight")
+
+            if new_height == last_height:
+                break
+            else:
+                last_height = new_height
+                max_scroll -= 1
+
+        html_content = driver.page_source
+
+        file_path = os.path.join(ColorHuntPageScraper.BASE_HTML_DIR, f"Color Hunt {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.html")
+        with open(file_path, "w+", encoding="utf-8") as file:
+            file.write(html_content)
+
+        driver.quit()
 
     @staticmethod
     def scrape_html_to_dataframe(html_path: str) -> pd.DataFrame:
@@ -63,4 +97,5 @@ class ColorHuntPageScraper(PageScraper):
 
 
 if __name__ == "__main__":
-    print(ColorHuntPageScraper.scrape_directory_to_dataframe())
+    ColorHuntPageScraper.download_html(3)
+    #print(ColorHuntPageScraper.scrape_directory_to_dataframe())
