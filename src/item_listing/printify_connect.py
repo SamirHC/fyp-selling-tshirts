@@ -8,13 +8,13 @@ PRINTIFY_API_TOKEN = config["PRINTIFY_API_TOKEN"]
 PRINTIFY_SHOP_ID = config["PRINTIFY_SHOP_ID"]
 BASE_URL = "https://api.printify.com/v1"
 
+headers = {
+    "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
+    "Content-Type": "application/json",
+}
+
 
 def get_blueprints():
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
-
     response = requests.get(
         f"{BASE_URL}/catalog/blueprints.json",
         headers=headers,
@@ -27,10 +27,6 @@ def get_blueprints():
 
 
 def get_print_providers_by_blueprint_id(blueprint_id):
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
     response = requests.get(
         f"{BASE_URL}/catalog/blueprints/{blueprint_id}/print_providers.json",
         headers=headers
@@ -43,10 +39,6 @@ def get_print_providers_by_blueprint_id(blueprint_id):
 
 
 def get_variants_of_blueprint_from_print_provider(blueprint_id, print_provider_id):
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
     response = requests.get(
         f"{BASE_URL}/catalog/blueprints/{blueprint_id}/print_providers/{print_provider_id}/variants.json",
         headers=headers
@@ -60,10 +52,6 @@ def get_variants_of_blueprint_from_print_provider(blueprint_id, print_provider_i
 
 
 def get_shops():
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
     response = requests.get(f"{BASE_URL}/shops.json", headers=headers)
     
     if response.status_code == 200:
@@ -74,20 +62,11 @@ def get_shops():
         print("Failed to retrieve shops:", response.status_code, response.text)
 
 
-def upload_image():
-    """
-    Upload image to Printify
-    """
-
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
+def upload_image(file_name="placeholder.png", image_url="https://via.placeholder.com/500x500"):
     payload = {
-        "file_name": "placeholder.png",
-        "url": "https://via.placeholder.com/500x500",
+        "file_name": file_name,
+        "url": image_url,
     }
-
     response = requests.post(
         f"{BASE_URL}/uploads/images.json",
         headers=headers,
@@ -95,21 +74,13 @@ def upload_image():
     )
 
     if response.status_code == 200:
-        print("Image uploaded successfully!")
+        print(f"Image {file_name} uploaded successfully! {image_url}")
         return response.json()
     else:
         print("Failed to upload image:", response.status_code, response.text)
 
 
 def get_uploads():
-    """
-    Gets all uploaded image data from Printful.
-    """
-
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
     response = requests.get(
         f"{BASE_URL}/uploads.json",
         headers=headers
@@ -123,20 +94,11 @@ def get_uploads():
 
 
 def create_product():
-    """
-    Create a product on Printify.
-    """
     blueprint_id = 5  # Unisex Cotton Crew Tee
     print_providers = get_print_providers_by_blueprint_id(blueprint_id)
     print_provider_id = print_providers[0]["id"]
     variants = get_variants_of_blueprint_from_print_provider(blueprint_id, print_provider_id)
     variant_id = variants["variants"][0]["id"]
-
-
-    headers = {
-        "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
 
     payload = {
         "title": "Placeholder Title",
