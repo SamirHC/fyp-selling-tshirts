@@ -19,3 +19,4 @@ transformers==4.48.1
 rembg==2.0.61
 onncruntime
 selenium
+cairosvg

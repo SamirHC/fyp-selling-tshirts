@@ -1,3 +1,5 @@
+import cairosvg
+import io
 from PIL import Image
 import rembg
 
@@ -20,6 +22,10 @@ def crop_to_content(image: Image.Image) -> Image.Image:
         return image.crop(bbox)
     else:
         return Image.new("RGBA", (1, 1), (0, 0, 0, 0))
+
+
+def svg_to_png(svg_path) -> Image.Image:
+    return Image.open(io.BytesIO(cairosvg.svg2png(url=svg_path, dpi=300)))
 
 
 if __name__ == "__main__":

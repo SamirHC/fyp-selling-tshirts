@@ -1,5 +1,7 @@
 import pickle
 
+import base64
+import io
 import pandas as pd
 from PIL import Image
 import requests
@@ -50,3 +52,10 @@ def get_image_from_url(url):
         return Image.open(response.raw)
     else:
         print(f"Failed to retrieve the image. Status code: {response.status_code}")
+
+
+def image_to_base64(image):
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("utf-8")
+    

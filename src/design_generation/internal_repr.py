@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 import base64
-import io
 from PIL import Image
 from lxml import etree
 
+from src.common import utils
 from src.data_collection import fonts
+from src.design_generation import render_text
 
 
 font_df = fonts.get_font_data()
@@ -27,9 +28,7 @@ class Node(ABC):
 
 class ImageComponent(Node):
     def __init__(self, image: Image.Image, position):
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-        self.base64_image = base64.b64encode(buffer.getvalue())
+        self.base64_image = utils.image_to_base64(image)
         self.position = position
 
     def to_dict(self):
@@ -43,17 +42,21 @@ class ImageComponent(Node):
             "image",
             x=str(self.position[0]),
             y=str(self.position[1]),
-            href=f"data:image/png;base64,{self.base64_image.decode("utf-8")}"
+            href=f"data:image/png;base64,{self.base64_image}"
         )
 
 
 class TextComponent(Node):
-    def __init__(self, position, text, font_family, font_size, fill):
+    def __init__(self, position, text, font_family, font_size, fill, tag="text"):
         self.position = position
         self.text = text
         self.font_family = font_family
         self.font_size = font_size
         self.fill = fill
+        self.tag = tag
+        self.dependencies = set()
+        if tag == "text":
+            self.dependencies.add(("font-family", self.font_family))
 
     def to_dict(self):
         return {
@@ -65,21 +68,38 @@ class TextComponent(Node):
         }
 
     def to_svg(self):
-        svg = etree.Element(
-            "text",
-            attrib={
-                "x": str(self.position[0]),
-                "y": str(self.position[1]),
-                "font-family": self.font_family,
-                "font-size": str(self.font_size),
-                "fill": f"rgb{self.fill}",
-            }
-        )
-        svg.text = self.text
+        match self.tag:
+            case "text":
+                svg = etree.Element(
+                    "text",
+                    attrib={
+                        "x": str(self.position[0]),
+                        "y": str(self.position[1]),
+                        "font-family": self.font_family,
+                        "font-size": str(self.font_size),
+                        "fill": f"rgb{self.fill}",
+                    }
+                )
+                svg.text = self.text
+            case "image":
+                image, bbox = render_text.render_text(
+                    self.text,
+                    font_path=font_df[font_df["family"] == self.font_family].iloc[0]["path"],
+                    font_size=self.font_size,
+                    text_color=self.fill,
+                    return_bbox=True
+                )
+                base64_image = utils.image_to_base64(image)
+                svg = etree.Element(
+                    "image",
+                    x=str(self.position[0]),
+                    y=str(self.position[1]-bbox[3]+bbox[1]),
+                    href=f"data:image/png;base64,{base64_image}"
+                )
         return svg
 
     def get_dependencies(self):
-        return {("font-family", self.font_family)}
+        return self.dependencies
 
 
 class Layer(Node):
@@ -202,7 +222,11 @@ if __name__ == "__main__":
 
     print()
     xml = etree.tostring(design.to_svg(), pretty_print=True)
-    
+
     import os
     with open(os.path.join("out", "j.svg"), "w") as f:
         f.write(xml.decode())
+
+    from src.design_generation import image_edit
+    im = image_edit.svg_to_png(os.path.join("out", "j.svg"))
+    im.show()
