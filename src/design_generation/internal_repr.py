@@ -78,6 +78,8 @@ class TextComponent(Node):
                         "font-family": self.font_family,
                         "font-size": str(self.font_size),
                         "fill": f"rgb{self.fill}",
+                        "text-anchor": "middle",
+                        "dominant-baseline": "middle",
                     }
                 )
                 svg.text = self.text
