@@ -56,14 +56,14 @@ def test_text_component_to_dict():
     out = ir.TextComponent(
         position=(0, 0),
         text="Hello World",
-        font_path="fake/font/path",
+        font_family="family_name",
         font_size=36,
         fill=(130, 0, 0)
     ).to_dict()
     expected = {
         "position": (0, 0),
         "text": "Hello World",
-        "font_path": "fake/font/path",
+        "font_family": "family_name",
         "font_size": 36,
         "fill": (130, 0, 0),
     }
