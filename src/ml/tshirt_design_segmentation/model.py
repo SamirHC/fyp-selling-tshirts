@@ -9,14 +9,14 @@ from torch import nn
 
 class TshirtPrintImageDataset(Dataset):
     def __init__(self, images, masks):
-        self.images = np.array(images).transpose(0, 3, 1, 2)[:, :3, :, :]
-        self.masks = np.array(masks)[:, np.newaxis, :, :]
+        self.images = images
+        self.masks = masks
     
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, idx):
-        image = self.images[idx]
+        image = self.images[idx] / 255
         label = self.masks[idx]
         return image, label
 
@@ -24,8 +24,13 @@ class TshirtPrintImageDataset(Dataset):
         indices = np.arange(len(self))
         np.random.shuffle(indices)
 
-        images = self.images[indices[:batch_size]]
-        labels = self.masks[indices[:batch_size]]
+        images, labels = [], []
+        for idx in indices[:batch_size]:
+            image, label = self[idx]
+            images.append(np.transpose(image, (2, 0, 1))[:3, :, :])
+            labels.append(label[np.newaxis, :, :])
+        images = np.array(images)
+        labels = np.array(labels)
 
         return images, labels
 
@@ -41,29 +46,37 @@ class TshirtPrintImageSegmentationModel(nn.Module):
         n = 16 # 16
         self.conv1 = nn.Sequential(
         nn.Conv2d(input_channel, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU()
         )
         n *= 2 # 32
         self.conv2 = nn.Sequential(
         nn.Conv2d(int(n / 2), n, kernel_size=3, stride=2, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU()
         )
         n *= 2 # 64
         self.conv3 = nn.Sequential(
         nn.Conv2d(int(n / 2), n, kernel_size=3, stride=2, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU()
         )
         n *= 2 # 128
         self.conv4 = nn.Sequential(
         nn.Conv2d(int(n / 2), n, kernel_size=3, stride=2, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU()
         )
         # Decoder path
@@ -71,24 +84,30 @@ class TshirtPrintImageSegmentationModel(nn.Module):
         self.up_conv4 = nn.ConvTranspose2d(n*2, n, kernel_size=2, stride=2)
         self.decode_conv3 = nn.Sequential(
         nn.Conv2d(n*2, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         )
         n //= 2 # 32
         self.up_conv3 = nn.ConvTranspose2d(n*2, n, kernel_size=2, stride=2)
         self.decode_conv2 = nn.Sequential(
         nn.Conv2d(n*2, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         )
         n //= 2 # 16
         self.up_conv2 = nn.ConvTranspose2d(n*2, n, kernel_size=2, stride=2)
         self.decode_conv1 = nn.Sequential(
         nn.Conv2d(n*2, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         nn.Conv2d(n, n, kernel_size=3, padding=1),
+        nn.BatchNorm2d(n),
         nn.ReLU(),
         )
         self.out_conv = nn.Conv2d(n, output_channel, kernel_size=1)
@@ -112,10 +131,10 @@ class TshirtPrintImageSegmentationModel(nn.Module):
         x = torch.cat([x, conv1_skip], dim=1)
         x = self.decode_conv1(x)
         x = self.out_conv(x)
-        return x
+        return torch.sigmoid(x)
 
     def save(self):
-        save_path = os.path.join("data", "models", "TshirtPrintImageSegmentationModel.pt")
+        save_path = os.path.join("data", "models", "TshirtPrintImageSegmentationModel1.pt")
         torch.save(self.state_dict(), save_path)
 
 
@@ -128,15 +147,16 @@ def train_and_save_model(train_data, test_data):
     model.to(device)
 
     params = list(model.parameters())
-    optimizer = optim.Adam(params)
-    criterion = nn.BCEWithLogitsLoss()
+    optimizer = optim.Adam(params, 1e-4)
+    criterion = nn.BCELoss()
 
     its = 10000
     train_batch_size = 16
+    eval_batch_size = 16
 
-    for i in range(its):
+    for i in range(1, 1+its):
         model.train()
-        print(i)
+
         images, masks = train_data.get_random_batch(train_batch_size)
         images, masks = torch.from_numpy(images), torch.from_numpy(masks)
         images, masks = images.to(device, dtype=torch.float32), masks.to(device, dtype=torch.float32)
@@ -149,7 +169,6 @@ def train_and_save_model(train_data, test_data):
 
         if i % 50 == 0:
             model.eval()
-            eval_batch_size = 16
             
             with torch.no_grad():
                 test_images, test_masks = test_data.get_random_batch(eval_batch_size)
@@ -157,7 +176,7 @@ def train_and_save_model(train_data, test_data):
                 test_images, test_masks = test_images.to(device, dtype=torch.float32), test_masks.to(device, dtype=torch.float32)
                 test_logits = model(test_images)
                 test_loss = criterion(test_logits, test_masks)
-                print(f"Eval: {test_loss}")
+                print(f"{i} Eval: {test_loss}")
 
     model.save()
     return model
@@ -184,22 +203,30 @@ if __name__ == "__main__":
     
     train_data = TshirtPrintImageDataset(images[:-200], labels[:-200])
     test_data = TshirtPrintImageDataset(images[-200:], labels[-200:])
-    model = train_and_save_model(train_data, test_data)
+    # model = train_and_save_model(train_data, test_data)
 
-    # model = TshirtPrintImageSegmentationModel()
-    # model.load_state_dict(torch.load(os.path.join("data", "models", "TshirtPrintImageSegmentationModel.pt")))
+    model = TshirtPrintImageSegmentationModel()
+    model.load_state_dict(torch.load(os.path.join("data", "models", "TshirtPrintImageSegmentationModel1.pt")))
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)
+
+    import matplotlib
+    matplotlib.use("TkAgg")
     import matplotlib.pyplot as plt
     from matplotlib import colors
 
+    # Visualise
     images, labels = test_data.get_random_batch(4)
-    logits = model(torch.from_numpy(images).to("cpu", dtype=torch.float32))
-    images = images.transpose((0, 2, 3, 1)[:, :, :, 0])
-    seg_images = torch.argmax(logits, dim=1).cpu().detach()
-    fig, axs = plt.subplots(4, 2, figsize=(60, 120))
+    logits = model(torch.from_numpy(images).to(device, dtype=torch.float32))
+    binary_mask = (logits > 0.5).float().squeeze().cpu().numpy()
+    images = images.transpose(0, 2, 3, 1)
+    labels = labels.transpose(0, 2, 3, 1)
+    fig, axs = plt.subplots(4, 3, figsize=(60, 120))
 
     for i in range(4):
         axs[i][0].imshow(images[i])
-        axs[i][1].imshow(seg_images[i], cmap=colors.ListedColormap(['black', 'white']))
+        axs[i][1].imshow(binary_mask[i], cmap=colors.ListedColormap(['black', 'white']))
+        axs[i][2].imshow(labels[i], cmap=colors.ListedColormap(['black', 'white']))
 
     plt.show()
