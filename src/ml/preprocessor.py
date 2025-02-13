@@ -60,16 +60,18 @@ def preprocessor(x: pd.DataFrame) -> pd.DataFrame:
 
 
 if __name__ == "__main__":
-    from src.data_collection import ebay_page_scrape
+    import os
+    from src.data_collection.ebay_page_scrape import EbayPageScraper
 
+    path = os.path.join(EbayPageScraper.BASE_SAVE_DIR, "ebay_data.pickle")
+    df = utils.load_data(path)
 
-    df = ebay_page_scrape.load_data()
+    print(df)
+
     x_pre = preprocessor(df)
 
     print(x_pre.dtypes)
     print(x_pre)
-
-    exit()
 
     for _, item in x_pre.iterrows():
         print(item)
