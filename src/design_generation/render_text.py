@@ -2,13 +2,10 @@ import os
 
 from PIL import Image, ImageDraw, ImageFont
 
-
-# Colors
-BLACK = (0, 0, 0, 255)
-TRANSPARENT = (0, 0, 0, 0)
+from src.common import constants
 
 
-def render_text(text: str, font_path: str, font_size=72, text_color=BLACK, return_bbox=False):
+def render_text(text: str, font_path: str, font_size=72, text_color=constants.Color.BLACK, return_bbox=False):
     font = ImageFont.truetype(font_path, size=font_size)
     bbox = font.getbbox(text)
     left, top, right, bottom = bbox
@@ -16,7 +13,7 @@ def render_text(text: str, font_path: str, font_size=72, text_color=BLACK, retur
     width = right - left
     height = bottom - top
 
-    text_image = Image.new("RGBA", (width, height), TRANSPARENT)
+    text_image = Image.new("RGBA", (width, height), constants.Color.TRANSPARENT)
     draw = ImageDraw.Draw(text_image)
     draw.text(offset, text, fill=text_color, font=font)
 

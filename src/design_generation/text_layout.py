@@ -4,11 +4,8 @@ from enum import Enum, auto
 
 from PIL import Image
 
-from src.design_generation.render_text import render_text
-
-
-BLACK = (0, 0, 0, 255)
-TRANSPARENT = (0, 0, 0, 0)
+from src.design_generation import render_text
+from src.common import constants
 
 
 class Align(Enum):
@@ -48,7 +45,7 @@ class Identity(TextLayout):
         font_size = kwargs["font_size"]
         text_color = kwargs["text_color"]
 
-        return render_text(text_components, font_path, font_size, text_color, return_bbox=True)
+        return render_text.render_text(text_components, font_path, font_size, text_color, return_bbox=True)
 
 
 class Multiline(TextLayout):
@@ -73,7 +70,7 @@ class Multiline(TextLayout):
 
         width = max(im.size[0] for im in imgs)
         height = sum(line_spacing) + bboxs[-1][1] - top + imgs[-1].size[1]
-        result = Image.new("RGBA", (width, height), TRANSPARENT)
+        result = Image.new("RGBA", (width, height), constants.Color.TRANSPARENT)
         overall_bbox = (left, top, left + width, top + height)
 
         y = 0
