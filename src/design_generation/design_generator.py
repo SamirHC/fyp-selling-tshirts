@@ -6,6 +6,8 @@ from src.design_generation import design_builder
 from src.data_collection import fonts
 from src.data_collection import palettes
 from src.data_collection import slogans
+from src.design_generation import internal_repr as ir
+from src.design_generation import template
 from src.design_generation import text_layout
 from src.design_generation import text_splitter
 
@@ -46,7 +48,7 @@ def random_design(seed=None):
 
     # Random layout
     layout = random.choice(text_layout.get_text_layouts(), 1)[0]
-    
+
     builder = design_builder.TextComponentBuilder()
     builder.set_layout(layout)
 
@@ -72,7 +74,8 @@ def random_design(seed=None):
 
     return builder.build()
 
+
 if __name__ == "__main__":
-    for k in range(30):
+    for k in range(1):
         img, _ = random_design()
         img.show()

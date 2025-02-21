@@ -29,7 +29,7 @@ def svg_to_png(svg_path) -> Image.Image:
 
 
 if __name__ == "__main__":
-    from src.ml.image_gen import StableDiffusion1_5_Txt2ImgModel
+    from src.ml.genai.image_gen import StableDiffusion1_5_Txt2ImgModel
 
     image_model = StableDiffusion1_5_Txt2ImgModel()
     image = image_model.generate_image(
