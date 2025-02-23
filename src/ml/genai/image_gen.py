@@ -59,17 +59,50 @@ class StableDiffusionInpaintingImageModel(ImageModel):
         return image
 
 
-if __name__ == "__main__":
-    """
-    image_model = StableDiffusion1_5_Txt2ImgModel()
-    image = image_model.generate_image(
-        prompt="Minimalist T-shirt design of planet Earth, modern aesthetic",
-        negative_prompt="blurry, messy, over-detailed, extra elements, complex, photorealistic",
-        height=768,
-        width=768,
-        num_inference_steps=50,
+def generate_print_design(model, noun):
+    image = model.generate_image(
+        prompt=f"(({noun})) Large, bold, simple minimalist design modern aesthetic, (vector graphics), pinterest",
+        negative_prompt="background, photorealistic, blurry, over-detailed, extra elements",
+        height=512,
+        width=512,
+        num_inference_steps=20,
         num_images_per_prompt=1
     )
+    return image
+
+
+if __name__ == "__main__":
+    import random
+
+    tshirt_design_nouns = [
+        "Moon", "Tiger", "Galaxy", "Mountain", "Wave", "Skull", "Sunset", "Lion", "Ocean", "Butterfly",
+        "Eagle", "Tree", "Rose", "Desert", "Star", "Volcano", "Compass", "Pineapple", "Dragon", "Dreamcatcher",
+        "Lightning", "Palm", "Lightning Bolt", "Unicorn", "Owl", "Cityscape", "Rocket", "Mandala", "Heart",
+        "Skull", "Mermaid", "Peacock", "Abstract", "Fish", "Whale", "Bear", "Rainbow", "Cat", "Music Notes",
+        "Leaf", "Mountain Range", "Wolf", "Shark", "Compass Rose", "Flower", "Feather", "Jellyfish", "Pyramid",
+        "Cactus", "Rocket Ship", "Astronaut", "Nebula", "Octopus", "Lighthouse", "Guitar", "Skateboard", 
+        "Campfire", "Bird", "Mushroom", "Castle", "Dragonfly", "Sunflower", "Anchor", "Crown", "Fox", "Tornado", 
+        "Cloud", "Turtle", "Penguin", "Koala", "Lightning Strike", "Zebra", "Giraffe", "Whale Shark", 
+        "Iceberg", "Venus", "Crescent", "Sun", "Hummingbird", "Lynx", "Panda", "Bamboo", "Raven", "Waves", 
+        "Pirate Ship", "Phoenix", "Firefly", "Marijuana Leaf", "Tribal", "Giraffe Head", "Lioness", "Moth", 
+        "Seahorse", "Sailboat", "T-rex", "Coyote", "Bison", "Hawk", "Peacock Feather", "Moonlit Forest", 
+        "Dragon Skull", "Flower Crown", "Caveman", "Sunrise", "Wavecrest", "Horizon", "Astral", "Meteor", "Compass Rose", "Zodiac", 
+        "Dream", "Butterfly Wings", "Starlight", "Palm Tree", "Vine", "Feathered Arrow", "Peach", 
+        "Citrus", "Ice Cream", "Fireworks", "Rocket Launch", "Tornado", "Galaxy Swirl", "Kite", 
+        "Labyrinth", "Pyramid Eye", "Crown Jewel", "Viking", "Mandalorian", "Autumn Leaves", "Neon Lights", 
+        "Circuit Board", "Ancient Ruins", "Celtic Knot", "Pine Forest", "Skull Mask", "Wings of Freedom", 
+        "Eclipse", "Zombie", "Vampire", "Venom", "Electric Guitar", "Gothic Cross", "Sand Dunes", 
+        "Skull and Crossbones", "Street Art", "Graffiti", "Boho", "Phoenix Feather", "Jaguar", 
+        "Glitch Art", "Triceratops", "Chameleon", "Shaman", "Camp Tent"
+    ]
+    image_model = StableDiffusion1_5_Txt2ImgModel()
+
+    for i in range(5):
+        noun = random.choice(tshirt_design_nouns)
+        print(noun)
+        image = generate_print_design(image_model, noun)
+        image.show()
+    
     """
     import os
 
@@ -86,4 +119,4 @@ if __name__ == "__main__":
         mask_image=mask,
         strength=0.95,
     )
-    image.show()
+    """
