@@ -20,3 +20,4 @@ rembg==2.0.61
 onncruntime
 selenium
 cairosvg
+openai

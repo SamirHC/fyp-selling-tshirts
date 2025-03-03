@@ -51,8 +51,13 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     )
 
     # TODO: Implement prompts and image generation
-    prompt = text_model.generate_text(",".join(tags))
-    image = image_model.generate_image(prompt=prompt)
+    prompt = text_model.generate_text(
+        "Return in string format a short, well-crafted prompt for a generative AI model using the following tags: " +
+        ",".join(tags)
+    )
+    print(f"Tags: {tags}")
+    print(f"Prompt: {prompt}")
+    image = image_model.generate_image(prompt=prompt).resize((256, 256))
 
     # TODO:
     #  - Create slogan and split
@@ -73,18 +78,23 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
 
 if __name__ == "__main__":
     image_df_path = os.path.join("data", "dataframes", "seller_hub_data", "ebay_data.pickle")
-    tshirt_df = utils.load_data(image_df_path).iloc[0:3]
+    tshirt_df = utils.load_data(image_df_path)
 
-    extract_design_data(tshirt_df, **{})
-    
-    sample_df = tshirt_df.sample(n=1)[["color_tags", "other_tags"]]
-    row = sample_df.iloc[0]
-    tags = row["color_tags"] + row["other_tags"]
+    sample_df = tshirt_df.sample(n=1)
 
-    design = generate_design(tags, **{})
+    extract_design_data(sample_df, **{
+        "tshirt_design_segmentation_model": segmentation.SegformerB3ClothesSegmentation()
+    })
+
+    row = sample_df.iloc[0][["color_tags", "other_tags"]]
+    tags = ["pinterest", "tshirt print design"] + row["color_tags"] + row["other_tags"]
+    design = generate_design(tags, **{
+        "text_model": text_gen.DeepSeekLLM(),
+        "image_model": image_gen.StableDiffusion1_5_Txt2ImgModel()
+    })
     xml = etree.tostring(design.to_svg(), pretty_print=True)
 
     temp_path = os.path.join("out", "temp.svg")
     with open(temp_path, "w") as f:
         f.write(xml.decode())
-    design_image = image_edit.svg_to_png(temp_path)
+    # design_image = image_edit.svg_to_png(temp_path)
