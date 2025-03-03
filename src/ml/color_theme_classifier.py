@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
+import skimage
 import matplotlib.pyplot as plt
 from PIL import Image
 
@@ -45,11 +46,41 @@ class ColorThemeClassifier:
 
         nearest_colors = np.array(nearest_colors[:, 1:], dtype=np.uint8)
         return row_idx, nearest_colors, min_dist
+    
+    @staticmethod
+    def find_closest_palette_cielab(colors):
+        weights = np.ones((4, 1), dtype=np.float32)
+
+        colors = np.array(colors, dtype=np.float32).reshape(1, 4, 3) / 255
+        colors = skimage.color.rgb2lab(colors)
+        colors = np.hstack((weights, colors.reshape(-1, 3)))
+        print(colors)
+
+        min_dist = float('inf')
+        row_idx = -1
+        for i in range(len(ColorThemeClassifier.color_df)):
+            row = ColorThemeClassifier.color_df.iloc[i]
+            row_colors = np.array([palettes.hex_to_rgb(hex) for hex in row["colors"]], dtype=np.float32).reshape(1, 4, 3) / 255
+            row_colors = skimage.color.rgb2lab(row_colors)
+            row_colors = np.hstack((weights, row_colors.reshape(-1, 3)))
+
+            dist, _, flow = cv2.EMD(row_colors, colors, cv2.DIST_L2)
+            if dist < min_dist:
+                min_dist = dist
+                row_idx = i
+                nearest_colors = flow @ row_colors[:, 1:]
+
+        nearest_colors = nearest_colors.reshape(1, 4, 3)
+        nearest_colors = skimage.color.lab2rgb(nearest_colors) * 255
+        nearest_colors = nearest_colors.reshape(-1, 3).astype(np.uint8)
+
+        return row_idx, nearest_colors, min_dist
+
 
     @staticmethod
     def get_palette_data(image: Image.Image) -> pd.Series:
         colors_rgb = ColorThemeClassifier.extract_colors(image)
-        row_idx, nearest_colors, dist = ColorThemeClassifier.find_closest_palette(colors_rgb)
+        row_idx, nearest_colors, dist = ColorThemeClassifier.find_closest_palette_cielab(colors_rgb)
         
         row = ColorThemeClassifier.color_df.iloc[row_idx]
         colors_rgb = [tuple(color) for color in colors_rgb]
@@ -70,10 +101,10 @@ class ColorThemeClassifier:
         print(palette_data)
 
         colors = palette_data["colors"]
-        colors = np.array(sorted(colors), dtype=np.uint8).reshape(1, -1, 3)
+        colors = np.array(colors, dtype=np.uint8).reshape(1, -1, 3)
 
         nearest_colors = palette_data["nearest_colors"]
-        nearest_colors = np.array(sorted(nearest_colors), dtype=np.uint8).reshape(1, -1, 3)
+        nearest_colors = np.array(nearest_colors, dtype=np.uint8).reshape(1, -1, 3)
 
         _, axs = plt.subplots(1, 3)
 
