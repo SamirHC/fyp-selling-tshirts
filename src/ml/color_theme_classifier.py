@@ -134,8 +134,8 @@ class ColorThemeClassifier:
         fig = plt.figure()
         ax = fig.add_subplot(projection="3d")
         ax.set_xlabel("Red")
-        ax.set_ylabel("Blue")
-        ax.set_zlabel("Green")
+        ax.set_ylabel("Green")
+        ax.set_zlabel("Blue")
 
         ax.set_xlim(0, 255)
         ax.set_ylim(0, 255)
