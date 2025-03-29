@@ -170,6 +170,18 @@ class Design(Node):
                         )
 
         svg.extend(layer.to_svg() for layer in self.layers)
+        
+        svg.append(
+            etree.Element("rect", attrib={
+                "x": "0",
+                "y": "0",
+                "width": str(self.canvas_size[0]),
+                "height": str(self.canvas_size[1]),
+                "fill": "none",
+                "stroke": "black",
+                "stroke-width": "1",
+            })
+        )
         return svg
 
     def get_dependencies(self):
