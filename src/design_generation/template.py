@@ -44,7 +44,6 @@ class SimpleText(Template):
         components.append(text_component)
 
         layer = ir.Layer(
-            size=self.canvas_size,
             position=(0, 0),
             components=components
         )
@@ -75,7 +74,6 @@ class SimpleMultilineText(Template):
             )
 
         layer = ir.Layer(
-            size=self.canvas_size,
             position=(0, 0),
             components=components
         )
@@ -100,14 +98,12 @@ class CenterImage(Template):
         components.append(image_component)
 
         layer = ir.Layer(
-            size=self.canvas_size,
             position=(0, 0),
             components=components
         )
 
 
         layer = ir.Layer(
-            size=self.canvas_size,
             position=(0, 0),
             components=components
         )
@@ -136,7 +132,6 @@ class TopBottomTextWithCenterImage(Template):
         )
         image_components.append(image_component)
         image_layer = ir.Layer(
-            size=self.canvas_size,
             position=(0, 0),
             components=image_components
         )
@@ -161,7 +156,6 @@ class TopBottomTextWithCenterImage(Template):
         text_components.append(bottom_text_component)
 
         text_layer = ir.Layer(
-            size=self.canvas_size,
             position=(0, 0),
             components=text_components
         )

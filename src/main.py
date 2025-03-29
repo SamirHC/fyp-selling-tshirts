@@ -97,4 +97,5 @@ if __name__ == "__main__":
     temp_path = os.path.join("out", "temp.svg")
     with open(temp_path, "w") as f:
         f.write(xml.decode())
-    # design_image = image_edit.svg_to_png(temp_path)
+    design_image = image_edit.svg_to_png(temp_path)
+    design_image.show()

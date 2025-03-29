@@ -105,25 +105,20 @@ class TextComponent(Node):
 
 
 class Layer(Node):
-    def __init__(self, size, position, components: list[Node]):
-        self.size = size
+    def __init__(self, position, components: list[Node]):
         self.position = position
         self.components = components
 
     def to_dict(self):
         return {
-            "size": self.size,
             "position": self.position,
             "components": [component.to_dict() for component in self.components],
         }
 
     def to_svg(self):
         svg: etree._Element = etree.Element(
-            "svg",
-            x=str(self.position[0]),
-            y=str(self.position[1]),
-            width=str(self.size[0]),
-            height=str(self.size[1]),
+            "g",
+            transform=f"translate{self.position}",
         )
         svg.extend(component.to_svg() for component in self.components)
         return svg
@@ -195,7 +190,6 @@ if __name__ == "__main__":
         canvas_size=(500, 500),
         layers=[
             Layer(
-                size=(300, 200),
                 position=(100, 200),
                 components=[
                     ImageComponent(
@@ -205,7 +199,6 @@ if __name__ == "__main__":
                 ],
             ),
             Layer(
-                size=(300, 100),
                 position=(200, 200),
                 components=[
                     TextComponent(

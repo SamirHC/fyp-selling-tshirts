@@ -18,7 +18,6 @@ def test_empty_layer_design_to_dict():
         canvas_size=(500, 500),
         layers=[
             ir.Layer(
-                size=(100, 100),
                 position=(0, 0),
                 components=[]
             ),
@@ -28,7 +27,6 @@ def test_empty_layer_design_to_dict():
         "canvas_size": (500, 500),
         "layers": [
         {
-            "size": (100, 100),
             "position": (0, 0),
             "components": [], 
         },
@@ -39,12 +37,10 @@ def test_empty_layer_design_to_dict():
 
 def test_empty_layer_to_dict():
     out = ir.Layer(
-        size=(100, 100),
         position=(0, 0),
         components=[]
     ).to_dict()
     expected = {
-        "size": (100, 100),
         "position": (0, 0),
         "components": [], 
     }
