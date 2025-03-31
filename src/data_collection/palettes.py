@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import skimage
 
 from src.common import utils
 
@@ -18,6 +19,18 @@ def get_palette_data() -> pd.DataFrame:
 def hex_to_rgb(hex: str) -> tuple[int, int, int]:
     hex = hex.lstrip('#')
     return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
+
+
+def hex_palette_to_rgb_array(palette: list[str]) -> np.ndarray:
+    return np.array([hex_to_rgb(hex) for hex in palette], dtype=np.uint8)
+
+
+def hex_palette_to_cielab_array(palette: list[str]) -> np.ndarray:
+    return skimage.color.rgb2lab(hex_palette_to_rgb_array(palette) / 255)
+
+
+def rgb_array_palette_to_cielab_array(palette: np.ndarray) -> np.ndarray:
+    return skimage.color.rgb2lab(palette / 255)
 
 
 def get_tags(palette_data: pd.DataFrame) -> set[str]:
