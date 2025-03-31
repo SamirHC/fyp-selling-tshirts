@@ -1,6 +1,8 @@
 import os
 
+import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.common import utils
 
@@ -22,8 +24,38 @@ def get_tags(palette_data: pd.DataFrame) -> set[str]:
     return set((palette_data["color_tags"] + palette_data["other_tags"]).explode().unique())
 
 
+def get_color_tag_counts(palette_data: pd.DataFrame) -> pd.Series:
+    return palette_data.explode("color_tags")["color_tags"].value_counts()
+
+
+def get_other_tag_counts(palette_data: pd.DataFrame) -> pd.Series:
+    return palette_data.explode("other_tags")["other_tags"].value_counts()
+
+
+def show_likes(palette_data: pd.DataFrame):
+    likes_df = palette_data["likes"].apply(lambda x: int(x.replace(",", "")))
+    plt.scatter(likes_df.index, likes_df.iloc[::-1], s=10, marker="x")
+    plt.yscale("log")
+    plt.xlabel("Nth Palette Submission to Color Hunt")
+    plt.ylabel("Number of Likes (Log Scale)")
+    plt.grid(True)
+    plt.show()
+
+
 if __name__ == "__main__":
     palette_data = get_palette_data()
 
     print([hex_to_rgb(hex) for hex in palette_data.iloc[0]["colors"]])
     print(get_tags(palette_data))
+    print(palette_data.iloc[0]["url"])
+
+    color_tag_counts = get_color_tag_counts(palette_data)
+    other_tag_counts = get_other_tag_counts(palette_data)
+
+    print(color_tag_counts)
+    print(other_tag_counts)
+
+    show_likes(palette_data)
+
+    #plt.pie(color_tag_counts)
+    #plt.show()
