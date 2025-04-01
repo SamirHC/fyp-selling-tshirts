@@ -21,6 +21,10 @@ def hex_to_rgb(hex: str) -> tuple[int, int, int]:
     return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
 
 
+def rgb_to_hex(rgb: tuple[int, int, int]) -> str:
+    return "#{:02x}{:02x}{:02x}".format(*rgb)
+
+
 def hex_palette_to_rgb_array(palette: list[str]) -> np.ndarray:
     return np.array([hex_to_rgb(hex) for hex in palette], dtype=np.uint8)
 
