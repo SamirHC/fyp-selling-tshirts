@@ -22,4 +22,6 @@ class PageScraper(ABC):
             df = cls.scrape_html_to_dataframe(abspath)
             dfs.append(df)
 
-        return pd.concat(dfs, ignore_index=True)
+        df = pd.concat(dfs, ignore_index=True).drop_duplicates()
+        df.reset_index(inplace=True)
+        return df

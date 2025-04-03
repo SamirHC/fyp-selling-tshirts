@@ -46,7 +46,7 @@ class EtsyPageScraper(PageScraper):
                     "price": price_elem.xpath(".//span[contains(@class, \"currency-value\")]")[0].text,
                 })
             except Exception as e:
-                print(e)
+                print(f"EtsyPageScraper: {e}")
 
         return pd.DataFrame(data)
 

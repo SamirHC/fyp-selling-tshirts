@@ -31,6 +31,13 @@ class ColorHuntPageScraper(PageScraper):
 
         time.sleep(2)
 
+        # Accept cookies
+        try:
+            close_button = driver.find_element(By.XPATH, "//button[@class=\"fc-button fc-cta-consent fc-primary-button\"]")
+            close_button.click()
+        except Exception as e:
+            print("Close button not found")
+
         last_height = driver.execute_script("return document.body.scrollHeight")
 
         while max_scroll:
@@ -94,13 +101,14 @@ class ColorHuntPageScraper(PageScraper):
                 }
                 data.append(row)
             except Exception as e:
-                print(i, e)
-        
+                print(f"ColorHuntPageScraper: {i}, {e}")
+
         driver.quit()
 
         return pd.DataFrame(data)
 
 
 if __name__ == "__main__":
-    ColorHuntPageScraper.download_html(3)
+    ColorHuntPageScraper.download_html()
+    #from src.common import utils
     #print(ColorHuntPageScraper.scrape_directory_to_dataframe())

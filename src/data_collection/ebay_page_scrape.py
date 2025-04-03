@@ -42,7 +42,7 @@ class EbayPageScraper(PageScraper):
                     "date_last_sold": row.xpath(".//td[@class=\"research-table-row__item research-table-row__dateLastSold\"]/div/div/text()")[0],
                 })
             except Exception as e:
-                print(e)
+                print(f"EbayPageScraper: {e}")
 
         return pd.DataFrame(data)
 
