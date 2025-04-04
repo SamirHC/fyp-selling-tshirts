@@ -20,14 +20,14 @@ CHROMEDRIVER_PATH = config["CHROMEDRIVER_PATH"]
 class ColorHuntPageScraper(PageScraper):
     BASE_HTML_DIR = os.path.join("data", "html", "color_hunt_palettes")
     BASE_SAVE_DIR = os.path.join("data", "dataframes", "color_hunt_palette_data")
+    URL = "https://colorhunt.co"
 
     @staticmethod
     def download_html(max_scroll=-1):
         service = Service(CHROMEDRIVER_PATH)
         driver = webdriver.Chrome(service=service)
 
-        URL = "https://colorhunt.co"
-        driver.get(URL)
+        driver.get(ColorHuntPageScraper.URL)
 
         time.sleep(2)
 
@@ -53,34 +53,36 @@ class ColorHuntPageScraper(PageScraper):
                 max_scroll -= 1
 
         html_content = driver.page_source
+        driver.quit()
 
         file_path = os.path.join(ColorHuntPageScraper.BASE_HTML_DIR, f"Color Hunt {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.html")
         with open(file_path, "w+", encoding="utf-8") as file:
             file.write(html_content)
 
-        driver.quit()
+        return file_path
 
     @staticmethod
     def scrape_html_to_dataframe(html_path: str) -> pd.DataFrame:
         with open(html_path, "r") as f:
             tree = etree.HTML(f.read())
-            divs = tree.xpath("//div[@class=\"item\"]")
-
+        
+        palette_divs = tree.xpath("//div[@class=\"item\"]")
         data = []
 
         service = Service(CHROMEDRIVER_PATH)
         driver = webdriver.Chrome(service=service)
 
-        for i, div in enumerate(divs):
+        for i, div in enumerate(palette_divs):
             try:
-                url = div.xpath(".//a")[0].get("href")
+                palette_id = div.get("data-code")
+                palette_url = "/".join((ColorHuntPageScraper.URL, "palette", palette_id))
 
-                driver.get(url)
+                driver.get(palette_url)
                 time.sleep(0.5)
 
                 tree = etree.HTML(driver.page_source).xpath("//div[@class=\"single hide\"]")[0]
                 row = {
-                    "palette_id": tree.xpath(".//div[@class=\"item\"]")[0].get("data-code"),
+                    "palette_id": palette_id,
                     "colors": [
                         tree.xpath(f".//div[@class=\"place c{i}\"]/span")[0].text
                         for i in range(4)
@@ -97,7 +99,7 @@ class ColorHuntPageScraper(PageScraper):
                         if tag.get("type") != "color"
                     ],
                     "date": tree.xpath(".//span[@class=\"date\"]")[0].text,
-                    "url": url,
+                    "url": palette_url,
                 }
                 data.append(row)
             except Exception as e:
@@ -109,6 +111,5 @@ class ColorHuntPageScraper(PageScraper):
 
 
 if __name__ == "__main__":
-    ColorHuntPageScraper.download_html()
-    #from src.common import utils
-    #print(ColorHuntPageScraper.scrape_directory_to_dataframe())
+    file_path = ColorHuntPageScraper.download_html(1)
+    print(ColorHuntPageScraper.scrape_html_to_dataframe(file_path))
