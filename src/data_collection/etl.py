@@ -5,6 +5,8 @@ import sqlite3
 
 from src.data_collection import palettes
 from src.data_collection.color_hunt_scrape import ColorHuntPageScraper
+from src.data_collection.ebay_page_scrape import EbayPageScraper
+from src.data_collection.etsy_page_scrape import EtsyPageScraper
 
 
 def extract_data():
@@ -13,12 +15,11 @@ def extract_data():
 
     ### Extract desired data to df
     #colorhunt_df = ColorHuntPageScraper.scrape_html_to_dataframe(colorhunt_html_path)
-    #print(colorhunt_df)
+    colorhunt_df = palettes.get_palette_data()  # Placeholder data
+    ebay_df = EbayPageScraper.scrape_directory_to_dataframe()
+    etsy_df = EtsyPageScraper.scrape_directory_to_dataframe()
 
-    # Placeholder data
-    colorhunt_df = palettes.get_palette_data()
-
-    return {"colorhunt": colorhunt_df}
+    return {"colorhunt": colorhunt_df, "ebay": ebay_df, "etsy": etsy_df}
 
 
 def transform_data(data):
@@ -47,8 +48,19 @@ def transform_data(data):
     palette_colours_df.columns = ("palette_id", "colour")
 
     ### Clothes
-    clothes_df = None
-    clothes_sources_df = None
+    # Ebay
+    ebay_df: pd.DataFrame = data["ebay"]
+    ebay_clothes_df = ebay_df[["item_id", "title", "img_url"]].dropna()
+    ebay_clothes_df.rename(columns={"img_url": "image_url"}, inplace=True)
+    ebay_clothes_df["source"] = "Ebay Seller Hub"
+
+    # Etsy
+    etsy_df: pd.DataFrame = data["etsy"]
+    etsy_clothes_df = etsy_df[["item_id", "title", "img_url"]].dropna()
+    etsy_clothes_df.rename(columns={"img_url": "image_url"}, inplace=True)
+    etsy_clothes_df["source"] = "Etsy Listing"
+
+    clothes_df = pd.concat((ebay_clothes_df, etsy_clothes_df))
 
     ### Print Design Features
     print_design_palettes_df = None
@@ -57,7 +69,6 @@ def transform_data(data):
 
     transformed_data = {
         "clothes": clothes_df,
-        "clothes_sources": clothes_sources_df,
         "palette_colours": palette_colours_df,
         "palette_distances": palette_distances_df,
         "palette_tag_associations": palette_tag_associations_df,
@@ -74,11 +85,13 @@ def load_data(data):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
+    # Create Tables
     SCHEMA_PATH = os.path.join("data","db","schema.sql")
     with open(SCHEMA_PATH, "r") as file:
         script = file.read()
     cursor.executescript(script)
 
+    # Palettes
     palette_tags_df: pd.DataFrame = data["palette_tags"]
     palette_tags_df.to_sql("palette_tags", conn, if_exists="append", index=False)
 
@@ -97,6 +110,17 @@ def load_data(data):
     palette_tag_associations_df.to_sql("palette_tag_associations", conn, if_exists="append", index=False)
 
     conn.commit()
+
+    # Tshirts
+    clothes_df: pd.DataFrame = data["clothes"]
+    cursor.executemany("""
+        INSERT OR IGNORE INTO "clothes" ("item_id", "title", "image_url", "source")
+        VALUES (?, ?, ?, ?)
+    """, clothes_df.values.tolist())
+
+    print(clothes_df)
+    conn.commit()
+
     conn.close()
 
 
