@@ -92,10 +92,9 @@ if __name__ == "__main__":
         "text_model": text_gen.DeepSeekLLM(),
         "image_model": image_gen.StableDiffusion1_5_Txt2ImgModel()
     })
-    xml = etree.tostring(design.to_svg(), pretty_print=True)
 
     temp_path = os.path.join("out", "temp.svg")
     with open(temp_path, "w") as f:
-        f.write(xml.decode())
+        f.write(design.to_svg())
     design_image = image_edit.svg_to_png(temp_path)
     design_image.show()

@@ -17,14 +17,18 @@ class Node(ABC):
 
     @abstractmethod
     def to_dict(self):
-        return
+        pass
 
     @abstractmethod
-    def to_svg(self):
-        return
+    def to_lxml(self) -> etree._Element:
+        pass
+
+    def to_svg(self) -> str:
+        return etree.tostring(self.to_lxml(), pretty_print=True, encoding="utf-8").decode()
 
     def get_dependencies(self):
         return set()
+
 
 class ImageComponent(Node):
     def __init__(self, image: Image.Image, position):
@@ -37,7 +41,7 @@ class ImageComponent(Node):
             "base64_image": self.base64_image
         }
 
-    def to_svg(self):
+    def to_lxml(self):
         return etree.Element(
             "image",
             x=str(self.position[0]),
@@ -67,7 +71,7 @@ class TextComponent(Node):
             "fill": self.fill
         }
 
-    def to_svg(self):
+    def to_lxml(self):
         match self.tag:
             case "text":
                 svg = etree.Element(
@@ -115,12 +119,12 @@ class Layer(Node):
             "components": [component.to_dict() for component in self.components],
         }
 
-    def to_svg(self):
+    def to_lxml(self):
         svg: etree._Element = etree.Element(
             "g",
             transform=f"translate{self.position}",
         )
-        svg.extend(component.to_svg() for component in self.components)
+        svg.extend(component.to_lxml() for component in self.components)
         return svg
     
     def get_dependencies(self):
@@ -142,7 +146,7 @@ class Design(Node):
             "layers": [layer.to_dict() for layer in self.layers]
         }
 
-    def to_svg(self):
+    def to_lxml(self):
         svg: etree._Element = etree.Element(
             "svg",
             width=str(self.canvas_size[0]),
@@ -169,7 +173,7 @@ class Design(Node):
                             "}\n"
                         )
 
-        svg.extend(layer.to_svg() for layer in self.layers)
+        svg.extend(layer.to_lxml() for layer in self.layers)
         
         svg.append(
             etree.Element("rect", attrib={
@@ -193,7 +197,9 @@ class Design(Node):
 
 
 if __name__ == "__main__":
+    import os
     from src.data_collection import fonts
+    from src.design_generation import image_edit
 
     font_data = fonts.get_font_data()
     font_paths = list(font_data["path"])
@@ -226,14 +232,10 @@ if __name__ == "__main__":
     )
 
     print(design.to_dict())
-
     print()
-    xml = etree.tostring(design.to_svg(), pretty_print=True)
 
-    import os
     with open(os.path.join("out", "j.svg"), "w") as f:
-        f.write(xml.decode())
+        f.write(design.to_svg())
 
-    from src.design_generation import image_edit
     im = image_edit.svg_to_png(os.path.join("out", "j.svg"))
     im.show()

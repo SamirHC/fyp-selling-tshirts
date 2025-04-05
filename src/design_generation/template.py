@@ -14,10 +14,13 @@ class Template(ABC):
         pass
 
     def save_svg(self, file_path):
-        xml = etree.tostring(self.design.to_svg(), pretty_print=True)
+        xml = self.to_svg()
 
         with open(file_path, "w+") as f:
-            f.write(xml.decode())
+            f.write(xml)
+
+    def to_lxml(self):
+        return self.design.to_lxml()
 
     def to_svg(self):
         return self.design.to_svg()
