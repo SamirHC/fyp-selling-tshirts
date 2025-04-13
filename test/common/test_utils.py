@@ -9,6 +9,14 @@ def test_get_image_from_url_returns_image():
 
     assert isinstance(image, Image.Image)
 
+
+def test_image_to_base64_returns_str():
+    image = Image.new("RGB", (10, 10))
+    base64 = utils.image_to_base64(image)
+
+    assert isinstance(base64, str)
+
+
 if __name__ == "__main__":
     import sys
     pytest.main(sys.argv)

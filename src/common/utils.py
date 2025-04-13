@@ -37,13 +37,16 @@ def load_data(path) -> pd.DataFrame:
     return df
 
 
-def get_image_from_url(url):
+def get_image_from_url(url: str) -> Image.Image:
     """
-    Loads an image given a url, or None if it fails.
+    Retrieves an image from a given URL and returns it as a Pillow Image object.
+    If the image cannot be loaded, it returns an empty image with a size of (0, 0).
 
-    :param url: URL to load the image from
-
-    :return image: Image object
+    :param url: The URL from which to load the image.
+    :type url: str
+    :returns: A Pillow Image object containing the image retrieved from the URL.
+    :rtype: PIL.Image.Image
+    :raises ValueError: If the URL is invalid or the image cannot be retrieved.
     """
 
     response = requests.get(url, stream=True)
@@ -51,11 +54,19 @@ def get_image_from_url(url):
     if response.status_code == 200:
         return Image.open(response.raw)
     else:
-        print(f"Failed to retrieve the image. Status code: {response.status_code}")
+        raise ValueError(f"Failed to retrieve the image. Status code: {response.status_code}")
 
 
-def image_to_base64(image):
+def image_to_base64(image: Image.Image) -> str:
+    """
+    Converts an image (PIL Image object) into a base64-encoded string.
+
+    :param image: A Pillow Image object to be converted.
+    :type image: PIL.Image.Image
+    :returns: A base64-encoded string representation of the image in PNG format.
+    :rtype: str
+    """
+
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
-    
