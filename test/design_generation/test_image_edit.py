@@ -1,7 +1,7 @@
 from PIL import Image
 import pytest
 
-from src.design_generation import image_edit
+from src.common import image_edit
 
 
 @pytest.fixture(scope="session")

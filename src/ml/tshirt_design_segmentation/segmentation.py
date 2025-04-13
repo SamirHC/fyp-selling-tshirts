@@ -7,7 +7,7 @@ from PIL import Image, ImageFilter
 import numpy as np
 
 from src.ml.tshirt_design_segmentation import segformer_b3_clothes
-from src.design_generation import image_edit
+
 
 class TshirtDesignSegmentationModel(ABC):
     def extract_design(self, image):
@@ -243,6 +243,7 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
 
 if __name__ == "__main__":
     from src.common import utils
+
     seg_model = ContourSegmentation()
     
     image_df_path = os.path.join("data", "dataframes", "seller_hub_data", "ebay_data.pickle")
@@ -255,4 +256,3 @@ if __name__ == "__main__":
         seg_image = seg_model.extract_design(image)
         seg_image.show()
         input()
-    

@@ -9,7 +9,7 @@ from torch import nn
 
 from src.ml.tshirt_design_segmentation import procure_data
 from src.ml.genai.image_gen import StableDiffusion1_5_Txt2ImgModel as SD15
-from src.design_generation import image_edit
+from src.common import image_edit
 from src.data_collection import fonts
 from src.design_generation import render_text
 

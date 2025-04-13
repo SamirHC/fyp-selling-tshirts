@@ -1,16 +1,14 @@
-import os
 import random
 
 import pandas as pd
-from lxml import etree
 
 from src.common import utils, constants
-from src.design_generation import image_edit
+from src.common import image_edit
 from src.design_generation import internal_repr as ir
+from src.design_generation.template import TopBottomTextWithCenterImage
 from src.ml.color_theme_classifier import ColorThemeClassifier
 from src.ml.tshirt_design_segmentation import segmentation
 from src.ml.genai import image_gen, text_gen
-from src.design_generation.template import TopBottomTextWithCenterImage
 
 
 def extract_design_data(df: pd.DataFrame, **kwargs):
@@ -77,6 +75,8 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
 
 
 if __name__ == "__main__":
+    import os
+
     image_df_path = os.path.join("data", "dataframes", "seller_hub_data", "ebay_data.pickle")
     tshirt_df = utils.load_data(image_df_path)
 

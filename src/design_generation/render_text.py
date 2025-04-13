@@ -1,5 +1,3 @@
-import os
-
 from PIL import Image, ImageDraw, ImageFont
 
 from src.common import constants
@@ -24,6 +22,8 @@ def render_text(text: str, font_path: str, font_size=72, text_color=constants.Co
 
 
 if __name__ == "__main__":
+    import os
+
     font_path = os.path.join("data", "fonts", "en", "great-vibes", "GreatVibes-Regular.ttf")
     text_image = render_text(
         "Earth is my favourite planet",

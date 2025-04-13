@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
-import os
 
 from PIL import Image
-from lxml import etree
 
 import src.design_generation.internal_repr as ir
 
@@ -165,8 +163,9 @@ class TopBottomTextWithCenterImage(Template):
         return ir.Design(self.canvas_size, [image_layer, text_layer])
 
 
-
 if __name__ == "__main__":
+    import os
+
     save_path = os.path.join("out", "template_test_1.svg")
     t1 = SimpleText((500, 500), "cookie", 72, (0, 0, 0), "Simple & Bold")
     t1.save_svg(save_path)

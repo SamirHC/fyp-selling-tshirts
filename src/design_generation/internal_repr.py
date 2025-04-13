@@ -199,7 +199,7 @@ class Design(Node):
 if __name__ == "__main__":
     import os
     from src.data_collection import fonts
-    from src.design_generation import image_edit
+    from src.common import image_edit
 
     font_data = fonts.get_font_data()
     font_paths = list(font_data["path"])
