@@ -17,6 +17,13 @@ def test_image_to_base64_returns_str():
     assert isinstance(base64, str)
 
 
+def test_get_image_from_url_raises_value_error():
+    invalid_url = "invalid_url"
+
+    with pytest.raises(ValueError):
+        utils.get_image_from_url(invalid_url)
+
+
 if __name__ == "__main__":
     import sys
     pytest.main(sys.argv)
