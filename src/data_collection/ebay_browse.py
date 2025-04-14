@@ -53,3 +53,30 @@ def get_item_details_by_id(access_token, item_id):
     response = requests.get(url=url, headers=headers)
     response.raise_for_status()
     return response.json()
+
+
+if __name__ == "__main__":
+    access_token = get_access_token()
+    result = search_items(access_token, "graphic tee", limit=10)
+    print(result.keys())
+
+    item_summaries = result["itemSummaries"]
+    print(item_summaries[0].keys())
+
+    
+    for item in item_summaries:
+        print(item["itemId"])
+        print(item["legacyItemId"])
+        print(item["listingMarketplaceId"])
+        print(item["title"])
+        print(item["thumbnailImages"][0]["imageUrl"])
+        
+        item_details = get_item_details_by_id(access_token, item["itemId"])
+        print(item_details["price"])
+        print(item_details["categoryPath"])
+        print(item_details["image"])
+        print(item_details["color"])
+        print(item_details["pattern"])
+        print(item_details["itemWebUrl"])
+
+        print()
