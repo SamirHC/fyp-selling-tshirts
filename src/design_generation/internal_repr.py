@@ -198,8 +198,8 @@ class Design(Node):
 
 if __name__ == "__main__":
     import os
+    import webbrowser
     from src.data_collection import fonts
-    from src.common import image_edit
 
     font_data = fonts.get_font_data()
     font_paths = list(font_data["path"])
@@ -231,11 +231,11 @@ if __name__ == "__main__":
         ]
     )
 
-    print(design.to_dict())
-    print()
+    svg = design.to_svg()
+    print(svg)
 
-    with open(os.path.join("out", "j.svg"), "w") as f:
-        f.write(design.to_svg())
+    svg_path = os.path.join("out", "internal_repr.svg")
+    with open(svg_path, "w") as f:
+        f.write(svg)
 
-    im = image_edit.svg_to_png(os.path.join("out", "j.svg"))
-    im.show()
+    webbrowser.get("firefox").open(svg_path)
