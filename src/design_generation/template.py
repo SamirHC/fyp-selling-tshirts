@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+import numpy as np
 from PIL import Image
 
 import src.design_generation.internal_repr as ir
@@ -163,6 +164,30 @@ class TopBottomTextWithCenterImage(Template):
         return ir.Design(self.canvas_size, [image_layer, text_layer])
 
 
+class GridCollage(Template):
+    def __init__(self, canvas_size, images: list[Image.Image], grid_x, grid_y):
+        assert len(images) == grid_x * grid_y
+        self.canvas_size = canvas_size
+        self.images = images
+        self.grid_x = grid_x
+        self.grid_y = grid_y
+
+    @property
+    def design(self):
+        image_components = []
+        xs = np.linspace(0, self.canvas_size[0], self.grid_x + 1)
+        ys = np.linspace(0, self.canvas_size[1], self.grid_y + 1)
+        for i, image in enumerate(self.images):
+            position = (xs[i % self.grid_x], ys[i // self.grid_x])
+            image_components.append(ir.ImageComponent(image, position))
+
+        image_layer = ir.Layer(
+            position=(0, 0),
+            components=image_components
+        )
+        return ir.Design(self.canvas_size, [image_layer])
+
+
 if __name__ == "__main__":
     import os
 
@@ -178,12 +203,23 @@ if __name__ == "__main__":
     image = Image.new("RGB", (100, 100), "red")
     object = Image.new("RGB", (50, 50), "blue")
     image.paste(object, (25, 25))
-    t2 = CenterImage((500, 500), image)
-    t2.save_svg(save_path)
+    t3 = CenterImage((500, 500), image)
+    t3.save_svg(save_path)
 
     save_path = os.path.join("out", "template_test_4.svg")
     image = Image.new("RGB", (200, 200), (255, 245, 245))
     object = Image.new("RGB", (100, 100), "yellow")
     image.paste(object, (50, 50))
-    t2 = TopBottomTextWithCenterImage((500, 500), image, "playball", 92, (255, 215, 0), "I Love", "Eggs")
-    t2.save_svg(save_path)
+    t4 = TopBottomTextWithCenterImage((500, 500), image, "playball", 92, (255, 215, 0), "I Love", "Eggs")
+    t4.save_svg(save_path)
+
+    save_path = os.path.join("out", "template_test_5.svg")
+    red_square = Image.new("RGB", (100, 100), "red")
+    blue_square = Image.new("RGB", (100, 100), "blue")
+    t5 = GridCollage(
+        canvas_size=(500, 500),
+        images=[red_square, blue_square, blue_square, red_square],
+        grid_x=2,
+        grid_y=2,
+    )
+    t5.save_svg(save_path)
