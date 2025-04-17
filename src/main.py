@@ -6,7 +6,7 @@ from src.common import utils, constants
 from src.common import image_edit
 from src.design_generation import internal_repr as ir
 from src.design_generation.template import TopBottomTextWithCenterImage
-from src.ml.color_theme_classifier import CIELabColorThemeClassifier
+from src.ml.color_analysis.color_theme_classifier import CIELabColorThemeClassifier
 from src.ml.tshirt_design_segmentation import segmentation
 from src.ml.genai import image_gen, text_gen
 
