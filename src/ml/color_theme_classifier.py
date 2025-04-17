@@ -16,7 +16,8 @@ class ColorThemeClassifier:
     @staticmethod
     def extract_colors(image: Image.Image, seed=23920) -> np.ndarray:
         """
-        Extract the four dominant colors from an image using K-Means clustering.
+        Extract the four dominant colors from an image using K-Means clustering
+        in RGB color space.
 
         :param image: A PIL Image object from which to extract colors.
         :param seed: Random seed for K-Means clustering to ensure reproducibility.
@@ -33,6 +34,31 @@ class ColorThemeClassifier:
         kmeans.fit(pixels)
 
         colors = kmeans.cluster_centers_.astype(np.uint8)
+        return colors
+
+    @staticmethod
+    def extract_colors_cielab(image: Image.Image, seed=23920) -> np.ndarray:
+        """
+        Extract the four dominant colors from an image using K-Means clustering
+        in CIELab color space.
+
+        :param image: A PIL Image object from which to extract colors.
+        :param seed: Random seed for K-Means clustering to ensure reproducibility.
+
+        
+        :return colors: A numpy array of shape (4, 3) containing the (0-255) RGB values of the 
+                        four dominant colors found in the image.
+        """
+
+        pixels = np.array(image).reshape(-1, 3)
+        cielab_pixels = skimage.color.rgb2lab(pixels / 255)
+
+        num_colors = 4
+        kmeans = KMeans(n_clusters=num_colors, n_init=10, random_state=seed)
+        kmeans.fit(cielab_pixels)
+
+        cielab_colors = kmeans.cluster_centers_
+        colors = (skimage.color.lab2rgb(cielab_colors) * 255).astype(np.uint8)
         return colors
 
     @staticmethod
@@ -84,7 +110,7 @@ class ColorThemeClassifier:
 
     @staticmethod
     def get_palette_data(image: Image.Image, cspace="cielab") -> pd.Series:
-        colors = ColorThemeClassifier.extract_colors(image)
+        colors = ColorThemeClassifier.extract_colors_cielab(image)
         match cspace:
             case "cielab":
                 colors_ = palettes.rgb_array_palette_to_cielab_array(colors)
@@ -132,7 +158,7 @@ class ColorThemeClassifier:
 
     @staticmethod
     def show_data_2(image: Image.Image):
-        colors = ColorThemeClassifier.extract_colors(image)
+        colors = ColorThemeClassifier.extract_colors_cielab(image)
         N = 7
         # RGB
         rgb_distances_df = ColorThemeClassifier.compute_distances(colors, "rgb")
@@ -171,7 +197,7 @@ class ColorThemeClassifier:
 
 
     @staticmethod
-    def plot_pixel_colors(image: Image.Image, n=2000) -> plt.Figure:
+    def plot_pixel_colors_rgb(image: Image.Image, n=2000) -> plt.Figure:
         colors = np.array(image).reshape(-1, 3)
 
         # Uniform sampling of the colours to reduce number of pixels plotted
@@ -198,13 +224,45 @@ class ColorThemeClassifier:
         ax.scatter(r, g, b, c=colors/255)
 
         return fig
+    
+    @staticmethod
+    def plot_pixel_colors_cielab(image: Image.Image, n=2000) -> plt.Figure:
+        colors = np.array(image).reshape(-1, 3) / 255
+        cielab_colors = skimage.color.rgb2lab(colors)
+
+        # Uniform sampling of the colours to reduce number of pixels plotted
+        indices = np.arange(len(colors))
+        np.random.shuffle(indices)
+        indices = indices[:n]
+
+        colors = colors[indices, :]
+        cielab_colors = cielab_colors[indices, :]
+
+        l = cielab_colors[:, 0]
+        a = cielab_colors[:, 1]
+        b = cielab_colors[:, 2]
+
+        fig = plt.figure()
+        ax = fig.add_subplot(projection="3d")
+        ax.set_xlabel("L*")
+        ax.set_ylabel("a*")
+        ax.set_zlabel("b*")
+
+        ax.set_xlim(0, 100)
+        ax.set_ylim(-128, 127)
+        ax.set_zlim(-128, 127)
+
+        ax.scatter(l, a, b, c=colors)
+
+        return fig
 
 
 if __name__ == "__main__":
     image = utils.get_image_from_url("https://image.uniqlo.com/UQ/ST3/WesternCommon/imagesgoods/456433/sub/goods_456433_sub20_3x4.jpg?width=600")    
     image = image.crop((0, 100, 600, 700))
 
-    ColorThemeClassifier.plot_pixel_colors(image, n=5000)
+    ColorThemeClassifier.plot_pixel_colors_rgb(image, n=5000)
+    ColorThemeClassifier.plot_pixel_colors_cielab(image, n=5000)
 
     plt.show()
 
