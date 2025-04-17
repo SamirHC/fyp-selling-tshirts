@@ -6,7 +6,7 @@ from src.common import utils, constants
 from src.common import image_edit
 from src.design_generation import internal_repr as ir
 from src.design_generation.template import TopBottomTextWithCenterImage
-from src.ml.color_theme_classifier import ColorThemeClassifier
+from src.ml.color_theme_classifier import CIELabColorThemeClassifier
 from src.ml.tshirt_design_segmentation import segmentation
 from src.ml.genai import image_gen, text_gen
 
@@ -22,7 +22,7 @@ def extract_design_data(df: pd.DataFrame, **kwargs):
 
         insights = {}
 
-        palette_data = ColorThemeClassifier.get_palette_data(design_image)
+        palette_data = CIELabColorThemeClassifier.get_palette_data(design_image)
         insights["color_tags"] = palette_data["color_tags"]
         insights["other_tags"] = palette_data["other_tags"]
         insights["colors"] = palette_data["colors"]
