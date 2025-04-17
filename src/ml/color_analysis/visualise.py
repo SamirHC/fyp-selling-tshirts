@@ -91,40 +91,44 @@ def show_data(image: Image.Image, classifier) -> plt.Figure:
 
 
 def show_data_2(image: Image.Image) -> plt.Figure:
-    N = 7
+    N = 11
     # RGB
-    colors = RGBColorThemeClassifier.extract_colors(image)
-    rgb_distances_df = RGBColorThemeClassifier.compute_distances(colors)
+    rgb_kmeans_colors = RGBColorThemeClassifier.extract_colors(image)
+    rgb_distances_df = RGBColorThemeClassifier.compute_distances(rgb_kmeans_colors)
     rgb_min = rgb_distances_df.nsmallest(N, "dist")["nearest_colors"]
     rgb_min = rgb_min.apply(lambda x: x.astype(np.uint8).reshape(1, -1, 3))
 
     # CIELab
-    colors_ = CIELabColorThemeClassifier.extract_colors(image)
-    colors_ = palettes.rgb_array_palette_to_cielab_array(colors_)
-    cielab_distances_df = CIELabColorThemeClassifier.compute_distances(colors_)
+    cielab_kmeans_colors = CIELabColorThemeClassifier.extract_colors(image)
+    cielab_distances_df = CIELabColorThemeClassifier.compute_distances(
+        palettes.rgb_array_palette_to_cielab_array(cielab_kmeans_colors)
+    )
     cielab_min = cielab_distances_df.nsmallest(N, "dist")["nearest_colors"]
     cielab_min = cielab_min.apply(lambda x: (skimage.color.lab2rgb(x) * 255).astype(np.uint8).reshape(1, -1, 3))
 
     print(rgb_min)
     print(cielab_min)
 
-    nrows, ncols = N, 3
+    nrows, ncols = 2, N + 2
     fig, axs = plt.subplots(nrows, ncols)
 
-    axs[N//2][0].set_title("Extracted Colors")
-    axs[N//2][0].imshow(colors.reshape(1, -1, 3))
+    axs[0][0].set_title("Extracted Colors (RGB)")
+    axs[0][0].imshow(rgb_kmeans_colors.reshape(-1, 1, 3))
 
-    axs[0][1].set_title("Nearest Colors (RGB)")
-    axs[0][2].set_title("Nearest Colors (CIELab)")
+    axs[1][0].set_title("Extracted Colors (CIELab)")
+    axs[1][0].imshow(cielab_kmeans_colors.reshape(-1, 1, 3))
+
+    axs[0][2 + N//2].set_title("Nearest Colors (RGB)")
+    axs[1][2 + N//2].set_title("Nearest Colors (CIELab)")
     for i in range(N):
-        axs[i][1].imshow(rgb_min.iloc[i])
-        axs[i][2].imshow(cielab_min.iloc[i])
+        axs[0][i+2].imshow(rgb_min.iloc[i].reshape(-1, 1, 3))
+        axs[1][i+2].imshow(cielab_min.iloc[i].reshape(-1, 1, 3))
 
     for i in range(nrows):
         for j in range(ncols):
             axs[i][j].set_xticks([])
             axs[i][j].set_yticks([])
-            if i != N//2 and j == 0:
+            if j == 1:
                 axs[i][j].set_axis_off()
 
     return fig
