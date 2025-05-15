@@ -1,13 +1,9 @@
 from abc import ABC
 
 from openai import OpenAI
-from dotenv import dotenv_values
 
 from src.data_collection import slogans
-
-
-config = dotenv_values(".env")
-OPENROUTER_API_KEY = config["OPENROUTER_API_KEY"]
+from src.common import config
 
 
 # TODO: Flesh out LLMs for text design generation and prompt generation.
@@ -34,7 +30,7 @@ class DeepSeekLLM(TextModel):
     def __init__(self):
         self.client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
-            api_key=OPENROUTER_API_KEY,
+            api_key=config.OPENROUTER_API_KEY,
         )
 
     def generate_text(self, prompt=""):

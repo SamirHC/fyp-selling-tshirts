@@ -1,15 +1,12 @@
-from dotenv import dotenv_values
 import requests
 
+from src.common import config
 
-config = dotenv_values(".env")
 
-PRINTIFY_API_TOKEN = config["PRINTIFY_API_TOKEN"]
-PRINTIFY_SHOP_ID = config["PRINTIFY_SHOP_ID"]
 BASE_URL = "https://api.printify.com/v1"
 
 headers = {
-    "Authorization": f"Bearer {PRINTIFY_API_TOKEN}",
+    "Authorization": f"Bearer {config.PRINTIFY_API_TOKEN}",
     "Content-Type": "application/json",
 }
 
@@ -126,7 +123,7 @@ def create_product():
     }
 
     response = requests.post(
-        f"{BASE_URL}/shops/{PRINTIFY_SHOP_ID}/products.json",
+        f"{BASE_URL}/shops/{config.PRINTIFY_SHOP_ID}/products.json",
         headers=headers,
         json=payload
     )

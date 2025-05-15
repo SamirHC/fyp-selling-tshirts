@@ -1,18 +1,14 @@
-from dotenv import dotenv_values
 import requests
 from requests.auth import HTTPBasicAuth
 
-config = dotenv_values(".env")
-
-CLIENT_ID = config["CLIENT_ID"]
-CLIENT_SECRET = config["CLIENT_SECRET"]
+from src.common import config
 
 
 def get_access_token():
     url = "https://api.ebay.com/identity/v1/oauth2/token"
     headers = {
         "Content-Type": "application/x-www-form-urlenconded",
-        "Authorization": f"Basic {CLIENT_ID}:{CLIENT_SECRET}",
+        "Authorization": f"Basic {config.CLIENT_ID}:{config.CLIENT_SECRET}",
     }
     body = {
         "grant_type": "client_credentials",
@@ -23,7 +19,7 @@ def get_access_token():
         url=url,
         headers=headers,
         data=body,
-        auth=HTTPBasicAuth(CLIENT_ID, CLIENT_SECRET)
+        auth=HTTPBasicAuth(config.CLIENT_ID, config.CLIENT_SECRET)
     )
     response.raise_for_status()
     return response.json()["access_token"]

@@ -2,7 +2,6 @@ from datetime import datetime
 import os
 import time
 
-from dotenv import dotenv_values
 from lxml import etree
 import pandas as pd
 from selenium import webdriver
@@ -11,10 +10,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 
 from src.data_collection.page_scraper import PageScraper
-
-
-config = dotenv_values(".env")
-CHROMEDRIVER_PATH = config["CHROMEDRIVER_PATH"]
+from src.common import config
 
 
 class ColorHuntPageScraper(PageScraper):
@@ -24,7 +20,7 @@ class ColorHuntPageScraper(PageScraper):
 
     @staticmethod
     def download_html(max_scroll=-1):
-        service = Service(CHROMEDRIVER_PATH)
+        service = Service(config.CHROMEDRIVER_PATH)
         driver = webdriver.Chrome(service=service)
 
         driver.get(ColorHuntPageScraper.URL)
@@ -69,7 +65,7 @@ class ColorHuntPageScraper(PageScraper):
         palette_divs = tree.xpath("//div[@class=\"item\"]")
         data = []
 
-        service = Service(CHROMEDRIVER_PATH)
+        service = Service(config.CHROMEDRIVER_PATH)
         driver = webdriver.Chrome(service=service)
 
         for i, div in enumerate(palette_divs):
