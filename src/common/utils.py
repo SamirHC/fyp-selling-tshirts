@@ -70,3 +70,16 @@ def image_to_base64(image: Image.Image) -> str:
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
     return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+
+def base64_to_image(base64_str: str) -> Image.Image:
+    """
+    Converts an base64-encoded string to a PNG image (PIL Image object).
+
+    :param base64_str: A base64-encoded string representation of the PNG image.
+    :type base64_str: str
+    :returns: A Pillow Image object.
+    :rtype: PIL.Image.Image
+    """
+
+    return Image.open(io.BytesIO(base64.b64decode(base64_str)))
