@@ -1,8 +1,9 @@
+from datetime import datetime
 import random
 
 import pandas as pd
 
-from src.common import utils, constants
+from src.common import utils, constants, config
 from src.common import image_edit
 from src.design_generation import internal_repr as ir
 from src.design_generation.template import TopBottomTextWithCenterImage
@@ -88,12 +89,19 @@ if __name__ == "__main__":
 
     row = sample_df.iloc[0][["color_tags", "other_tags"]]
     tags = ["pinterest", "tshirt print design"] + row["color_tags"] + row["other_tags"]
+
+    image_model = image_gen.DummyImageModel()
+    if config.GPU == 0 and config.PAYMENT_ACTIVE:
+        image_model = image_gen.OpenAIDallE3ImageModel()
+    elif config.GPU == 1:
+        image_model = image_gen.StableDiffusion1_5_Txt2ImgModel()
+
     design = generate_design(tags, **{
         "text_model": text_gen.DeepSeekLLM(),
-        "image_model": image_gen.StableDiffusion1_5_Txt2ImgModel()
+        "image_model": image_model
     })
 
-    temp_path = os.path.join("out", "temp.svg")
+    temp_path = os.path.join("out", f"main {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.svg")
     with open(temp_path, "w") as f:
         f.write(design.to_svg())
     design_image = image_edit.svg_to_png(temp_path)
