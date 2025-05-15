@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import pandas as pd
 from PIL import Image
+from scipy import optimize
 import skimage
 from sklearn.cluster import KMeans
 
@@ -34,9 +35,13 @@ class RGBColorThemeClassifier:
 
         colors = kmeans.cluster_centers_.astype(np.uint8)
         return colors
-
+    
     @staticmethod
     def palette_distance(p: np.ndarray, q: np.ndarray) -> tuple[float, np.ndarray]:
+        return RGBColorThemeClassifier.palette_distance_hungarian(p, q)
+
+    @staticmethod
+    def palette_distance_EMD(p: np.ndarray, q: np.ndarray) -> tuple[float, np.ndarray]:
         """
         Calculates the Earth Mover's Distance between two 4-color palettes using
         the L2-norm (Euclidean Distance).
@@ -63,6 +68,40 @@ class RGBColorThemeClassifier:
         return dist, nearest_colors
 
     @staticmethod
+    def palette_distance_hungarian(p: np.ndarray, q: np.ndarray) -> tuple[float, np.ndarray]:
+        """
+        Calculates the distance between two 4-color palettes.
+        It also returns the optimal pairings based on the computed flow matrix.
+
+        :param p: A (4, 3) numpy array representing the first color palette.
+        :param q: A (4, 3) numpy array representing the second color palette.
+
+        :return: A tuple containing:
+
+            - **dist (float)**: 
+                The computed distance between `p` and `q`.
+            - **nearest_colors (np.ndarray)**:
+                A (4, 3) numpy array representing permuted nearest colors in `q`
+                to `p`.
+        """
+
+        p = p.astype(np.float32)
+        q = q.astype(np.float32)
+
+        cost_matrix = np.zeros((4, 4))
+        for i in range(4):
+            for j in range(4):
+                cost_matrix[i, j] = np.linalg.norm(p[i] - q[j])
+
+        row_ind, col_ind = optimize.linear_sum_assignment(cost_matrix)
+        flow = np.zeros((4, 4))
+        flow[row_ind, col_ind] = 1
+
+        nearest_colors = flow @ q
+        dist = np.sum(cost_matrix[row_ind, col_ind])        
+        return dist, nearest_colors
+
+    @staticmethod
     def find_closest_palette(colors):
         distances_df = RGBColorThemeClassifier.compute_distances(colors)
         min_row = distances_df.loc[distances_df["dist"].idxmin()]
@@ -77,7 +116,12 @@ class RGBColorThemeClassifier:
     def compute_distances(colors):
         df = color_df.copy()
         df[["dist", "nearest_colors"]] = df["colors"].apply(
-            lambda row_colors: pd.Series(RGBColorThemeClassifier.palette_distance(colors, palettes.hex_palette_to_rgb_array(row_colors)))
+            lambda row_colors: pd.Series(
+                RGBColorThemeClassifier.palette_distance(
+                    colors, 
+                    palettes.hex_palette_to_rgb_array(row_colors)
+                )
+            )
         )
         return df
 
@@ -128,6 +172,41 @@ class CIELabColorThemeClassifier:
 
     @staticmethod
     def palette_distance(p: np.ndarray, q: np.ndarray) -> tuple[float, np.ndarray]:
+        return CIELabColorThemeClassifier.palette_distance_hungarian(p, q)
+
+    @staticmethod
+    def palette_distance_hungarian(p: np.ndarray, q: np.ndarray) -> tuple[float, np.ndarray]:
+        """
+        Calculates the distance between two 4-color palettes.
+        It also returns the optimal pairings based on the computed flow matrix.
+
+        :param p: A (4, 3) numpy array representing the first color palette.
+        :param q: A (4, 3) numpy array representing the second color palette.
+
+        :return: A tuple containing:
+
+            - **dist (float)**: 
+                The computed distance between `p` and `q`.
+            - **nearest_colors (np.ndarray)**:
+                A (4, 3) numpy array representing permuted nearest colors in `q`
+                to `p`.
+        """
+
+        cost_matrix = np.zeros((4, 4))
+        for i in range(4):
+            for j in range(4):
+                cost_matrix[i, j] = np.linalg.norm(p[i, :] - q[j, :])
+
+        row_ind, col_ind = optimize.linear_sum_assignment(cost_matrix)
+        flow = np.zeros((4, 4))
+        flow[row_ind, col_ind] = 1
+
+        nearest_colors = flow @ q
+        dist = np.sum(cost_matrix[row_ind, col_ind])
+        return dist, nearest_colors
+
+    @staticmethod
+    def palette_distance_EMD(p: np.ndarray, q: np.ndarray) -> tuple[float, np.ndarray]:
         """
         Calculates the Earth Mover's Distance between two 4-color palettes using
         the L2-norm (Euclidean Distance). 
