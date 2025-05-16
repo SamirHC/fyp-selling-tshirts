@@ -25,10 +25,9 @@ class ColorHuntPageScraper(PageScraper):
 
         driver.get(ColorHuntPageScraper.URL)
 
-        time.sleep(2)
-
         # Accept cookies
         try:
+            time.sleep(2)
             close_button = driver.find_element(By.XPATH, "//button[@class=\"fc-button fc-cta-consent fc-primary-button\"]")
             close_button.click()
         except Exception as e:
@@ -39,7 +38,7 @@ class ColorHuntPageScraper(PageScraper):
         while max_scroll:
             driver.find_element(By.TAG_NAME,'body').send_keys(Keys.END)
 
-            time.sleep(2)
+            time.sleep(0.5)
             new_height = driver.execute_script("return document.body.scrollHeight")
 
             if new_height == last_height:
@@ -107,5 +106,5 @@ class ColorHuntPageScraper(PageScraper):
 
 
 if __name__ == "__main__":
-    file_path = ColorHuntPageScraper.download_html(1)
+    file_path = ColorHuntPageScraper.download_html(10)
     print(ColorHuntPageScraper.scrape_html_to_dataframe(file_path))
