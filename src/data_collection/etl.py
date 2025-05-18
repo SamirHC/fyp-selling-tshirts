@@ -40,12 +40,10 @@ def extract_data(**flags):
         colorhunt_df = ColorHuntPageScraper.scrape_html_to_dataframe(colorhunt_html_path)
 
         conn = sqlite3.connect(DB_PATH)
-        query = "SELECT color_hunt_id FROM palettes WHERE id = 0 LIMIT 1"
-        first_palette_id = conn.execute(query, ()).fetchone()
-        if len(colorhunt_df) and first_palette_id in colorhunt_df["palette_id"]:
+        query = "SELECT COUNT(color_hunt_id) FROM palettes"
+        count = conn.execute(query, ()).fetchone()
+        if len(colorhunt_df) >= count:
             extracted_data["colorhunt"] = colorhunt_df
-        else:
-            print("Scrape terminated early: aborting ColorHunt database update")
 
     if flags["ebay_seller_hub"]:
         ebay_seller_hub_df = EbayPageScraper.scrape_directory_to_dataframe()
@@ -179,4 +177,4 @@ def etl_pipeline(**flags):
 
 
 if __name__ == "__main__":
-    etl_pipeline(ebay_browse=True)
+    etl_pipeline(colorhunt=True)
