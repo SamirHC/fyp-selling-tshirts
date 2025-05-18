@@ -45,18 +45,17 @@ CREATE TABLE IF NOT EXISTS "clothes" (
   PRIMARY KEY ("source", "item_id")
 );
 
--- DROP TABLE IF EXISTS "print_design_palettes";
+DROP TABLE IF EXISTS "print_design_palettes";
 
 CREATE TABLE IF NOT EXISTS "print_design_palettes" (
   "source" TEXT,
   "item_id" TEXT,
   "colour" CHAR(7),
   PRIMARY KEY ("source", "item_id", "colour")
-  FOREIGN KEY ("item_id") REFERENCES "clothes" ("item_id")
-  FOREIGN KEY ("source") REFERENCES "clothes" ("source")
+  FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
 );
 
--- DROP TABLE IF EXISTS "print_design_regions";
+DROP TABLE IF EXISTS "print_design_regions";
 
 CREATE TABLE IF NOT EXISTS "print_design_regions" (
   "source" TEXT,
@@ -66,11 +65,10 @@ CREATE TABLE IF NOT EXISTS "print_design_regions" (
   "width" INTEGER,
   "height" INTEGER,
   PRIMARY KEY ("source", "item_id")
-  FOREIGN KEY ("item_id") REFERENCES "clothes" ("item_id")
-  FOREIGN KEY ("source") REFERENCES "clothes" ("source")
+  FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
 );
 
--- DROP TABLE IF EXISTS "palette_distances";
+DROP TABLE IF EXISTS "palette_distances";
 
 CREATE TABLE IF NOT EXISTS "palette_distances" (
   "palette_id" INTEGER,
@@ -79,6 +77,5 @@ CREATE TABLE IF NOT EXISTS "palette_distances" (
   "distance" FLOAT,
   PRIMARY KEY ("palette_id", "source", "design_id")
   FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
-  FOREIGN KEY ("design_id") REFERENCES "clothes" ("item_id")
-  FOREIGN KEY ("source") REFERENCES "clothes" ("source")
+  FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
 );

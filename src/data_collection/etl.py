@@ -6,6 +6,7 @@ import sqlite3
 from src.data_collection.color_hunt_scrape import ColorHuntPageScraper
 from src.data_collection.ebay_page_scrape import EbayPageScraper
 from src.data_collection.etsy_page_scrape import EtsyPageScraper
+from src.data_collection import ebay_browse
 
 
 DB_PATH = os.path.join("data","db","dev_database.db")
@@ -26,7 +27,8 @@ def create_tables():
 def extract_data(**flags):
     default_flags = {
         "colorhunt": False,
-        "ebay": False,
+        "ebay_browse": False,
+        "ebay_seller_hub": False,
         "etsy": False,
     }
     flags = {key: flags.get(key, default) for key, default in default_flags.items()}
@@ -42,11 +44,23 @@ def extract_data(**flags):
         first_palette_id = conn.execute(query, ()).fetchone()
         if len(colorhunt_df) and first_palette_id in colorhunt_df["palette_id"]:
             extracted_data["colorhunt"] = colorhunt_df
+        else:
+            print("Scrape terminated early: aborting ColorHunt database update")
 
-    if flags["ebay"]:
-        ebay_df = EbayPageScraper.scrape_directory_to_dataframe()
-        if len(ebay_df):
-            extracted_data["ebay"] = ebay_df
+    if flags["ebay_seller_hub"]:
+        ebay_seller_hub_df = EbayPageScraper.scrape_directory_to_dataframe()
+        if len(ebay_seller_hub_df):
+            extracted_data["ebay_seller_hub"] = ebay_seller_hub_df
+    
+    if flags["ebay_browse"]:
+        access_token = ebay_browse.get_access_token()
+        queries = ["funny graphic tee", "inspirational tshirt"]
+        ebay_browse_df = pd.concat(
+            ebay_browse.get_items_as_dataframe(access_token, query)
+            for query in queries
+        )
+        if len(ebay_browse_df):
+            extracted_data["ebay_browse"] = ebay_browse_df
     
     if flags["etsy"]:
         etsy_df = EtsyPageScraper.scrape_directory_to_dataframe()
@@ -92,12 +106,18 @@ def transform_data(data):
 
     clothes_df = pd.DataFrame()
 
-    if "ebay" in data:
-        ebay_df: pd.DataFrame = data["ebay"]
-        ebay_clothes_df = ebay_df[["item_id", "title", "img_url"]].dropna()
-        ebay_clothes_df.rename(columns={"img_url": "image_url"}, inplace=True)
-        ebay_clothes_df["source"] = "Ebay Seller Hub"
-        clothes_df = pd.concat([clothes_df, ebay_clothes_df])
+    if "ebay_seller_hub" in data:
+        ebay_seller_hub_df: pd.DataFrame = data["ebay_seller_hub"]
+        ebay_seller_hub_clothes_df = ebay_seller_hub_df[["item_id", "title", "img_url"]].dropna()
+        ebay_seller_hub_clothes_df.rename(columns={"img_url": "image_url"}, inplace=True)
+        ebay_seller_hub_clothes_df["source"] = "Ebay Seller Hub"
+        clothes_df = pd.concat([clothes_df, ebay_seller_hub_clothes_df])
+
+    if "ebay_browse" in data:
+        ebay_browse_df: pd.DataFrame = data["ebay_browse"]
+        ebay_browse_clothes_df = ebay_browse_df[["item_id", "title", "img_url"]].dropna()
+        ebay_browse_clothes_df["source"] = "Ebay Browse API"
+        clothes_df = pd.concat([clothes_df, ebay_browse_clothes_df])
 
     if "etsy" in data:
         etsy_df: pd.DataFrame = data["etsy"]
@@ -148,11 +168,15 @@ def load_data(data):
 
 
 def etl_pipeline(**flags):
-    # create_tables()
+    """
+    flags: colorhunt, etsy, ebay_seller_hub, ebay_browse
+    """
+
+    create_tables()
     data = extract_data(**flags)
     data = transform_data(data)
     load_data(data)
 
 
 if __name__ == "__main__":
-    etl_pipeline(etsy=True)
+    etl_pipeline(ebay_browse=True)

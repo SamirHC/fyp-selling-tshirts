@@ -1,6 +1,8 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
+import pandas as pd
+
 from src.common import config
 
 
@@ -51,15 +53,34 @@ def get_item_details_by_id(access_token, item_id):
     return response.json()
 
 
+def get_items_as_dataframe(access_token, query, limit=10) -> pd.DataFrame:
+    try:
+        result = search_items(access_token, query, limit)
+    except Exception as e:
+        print(f"Error in get_items_as_dataframe: {e}. Returning empty df")
+        return pd.DataFrame(columns=["item_id", "title", "img_url"])
+
+    df = pd.DataFrame(result["itemSummaries"])
+    df = df[["itemId", "title", "thumbnailImages"]]
+    df = df.rename(columns={"itemId": "item_id", "thumbnailImages": "img_url"})
+    df["img_url"] = df["img_url"].apply(lambda x: x[0]["imageUrl"])
+
+    return df
+
+
 if __name__ == "__main__":
     access_token = get_access_token()
+    df = get_items_as_dataframe(access_token, "inspirational graphic tee", limit=3)
+    print(df)
+    print(df.iloc[0]["img_url"])
+
+    """
     result = search_items(access_token, "graphic tee", limit=10)
     print(result.keys())
 
     item_summaries = result["itemSummaries"]
     print(item_summaries[0].keys())
 
-    
     for item in item_summaries:
         print(item["itemId"])
         print(item["legacyItemId"])
@@ -76,3 +97,4 @@ if __name__ == "__main__":
         print(item_details["itemWebUrl"])
 
         print()
+        """
