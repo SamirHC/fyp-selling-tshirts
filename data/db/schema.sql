@@ -1,4 +1,4 @@
--- DROP TABLE IF EXISTS "palettes";
+--DROP TABLE IF EXISTS "palettes";
 
 CREATE TABLE IF NOT EXISTS "palettes" (
   "id" INTEGER,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "palettes" (
   PRIMARY KEY ("id")
 );
 
--- DROP TABLE IF EXISTS "palette_tags";
+--DROP TABLE IF EXISTS "palette_tags";
 
 CREATE TABLE IF NOT EXISTS "palette_tags" (
   "name" TEXT,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "palette_tags" (
   PRIMARY KEY ("name")
 );
 
--- DROP TABLE IF EXISTS "palette_tag_associations";
+--DROP TABLE IF EXISTS "palette_tag_associations";
 
 CREATE TABLE IF NOT EXISTS "palette_tag_associations" (
   "palette_id" INTEGER,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS "palette_tag_associations" (
   FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
 );
 
--- DROP TABLE IF EXISTS "palette_colours";
+--DROP TABLE IF EXISTS "palette_colours";
 
 CREATE TABLE IF NOT EXISTS "palette_colours" (
   "palette_id" INTEGER,
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS "clothes" (
   PRIMARY KEY ("source", "item_id")
 );
 
-DROP TABLE IF EXISTS "print_design_palettes";
+--DROP TABLE IF EXISTS "print_design_palettes";
 
 CREATE TABLE IF NOT EXISTS "print_design_palettes" (
   "source" TEXT,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS "print_design_palettes" (
   FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
 );
 
-DROP TABLE IF EXISTS "print_design_regions";
+--DROP TABLE IF EXISTS "print_design_regions";
 
 CREATE TABLE IF NOT EXISTS "print_design_regions" (
   "source" TEXT,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS "print_design_regions" (
   FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
 );
 
-DROP TABLE IF EXISTS "palette_distances";
+--DROP TABLE IF EXISTS "palette_distances";
 
 CREATE TABLE IF NOT EXISTS "palette_distances" (
   "palette_id" INTEGER,

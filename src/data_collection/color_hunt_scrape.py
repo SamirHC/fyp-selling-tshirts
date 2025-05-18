@@ -1,4 +1,3 @@
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 import os
 import time
@@ -72,34 +71,38 @@ class ColorHuntPageScraper(PageScraper):
         options.add_argument("--headless")
         driver = webdriver.Chrome(options=options, service=service)
 
-        for n, div in enumerate(palette_divs):
+        for n, div in enumerate(palette_divs):            
             palette_id = div.get("data-code")
             palette_url = "/".join((ColorHuntPageScraper.URL, "palette", palette_id))
-            driver.get(palette_url)
-
-            tree = etree.HTML(driver.page_source).xpath("//div[@class=\"single hide\"]")[0]
-            row = {
-                "palette_id": palette_id,
-                "colors": [
-                    tree.xpath(f".//div[@class=\"place c{i}\"]/span")[0].text
-                    for i in range(4)
-                ],
-                "likes": int(tree.xpath(".//div[@class=\"button like\"]/span")[0].text.replace(",", "")),
-                "color_tags": [
-                    tag.get("tag")
-                    for tag in tree.xpath(".//div[@class=\"tags\"]/a")
-                    if tag.get("type") == "color"
-                ],
-                "other_tags": [
-                    tag.get("tag")
-                    for tag in tree.xpath(".//div[@class=\"tags\"]/a")
-                    if tag.get("type") != "color"
-                ],
-                "date": tree.xpath(".//span[@class=\"date\"]")[0].text,
-                "url": palette_url,
-            }
-            data.append(row)
-            print(n)
+            while True:
+                try:
+                    driver.get(palette_url)
+                    print(n, palette_id)
+                    tree = etree.HTML(driver.page_source).xpath("//div[@class=\"single hide\"]")[0]
+                    row = {
+                        "palette_id": palette_id,
+                        "colors": [
+                            tree.xpath(f".//div[@class=\"place c{i}\"]/span")[0].text
+                            for i in range(4)
+                        ],
+                        "likes": int(tree.xpath(".//div[@class=\"button like\"]/span")[0].text.replace(",", "")),
+                        "color_tags": [
+                            tag.get("tag")
+                            for tag in tree.xpath(".//div[@class=\"tags\"]/a")
+                            if tag.get("type") == "color"
+                        ],
+                        "other_tags": [
+                            tag.get("tag")
+                            for tag in tree.xpath(".//div[@class=\"tags\"]/a")
+                            if tag.get("type") != "color"
+                        ],
+                        "date": tree.xpath(".//span[@class=\"date\"]")[0].text,
+                        "url": palette_url,
+                    }
+                    data.append(row)
+                    break
+                except Exception as e:
+                    print(f"ColorHuntPageScraper: {n, palette_id, e}")
 
         driver.quit()
 

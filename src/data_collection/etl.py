@@ -36,13 +36,9 @@ def extract_data(**flags):
     extracted_data = {}
 
     if flags["colorhunt"]:
-        colorhunt_html_path = ColorHuntPageScraper.download_html()
+        colorhunt_html_path = "data/html/color_hunt_palettes/Color Hunt 2025-05-18 18:21:37.html"  # ColorHuntPageScraper.download_html()
         colorhunt_df = ColorHuntPageScraper.scrape_html_to_dataframe(colorhunt_html_path)
-
-        conn = sqlite3.connect(DB_PATH)
-        query = "SELECT COUNT(color_hunt_id) FROM palettes"
-        count = conn.execute(query, ()).fetchone()
-        if len(colorhunt_df) >= count:
+        if len(colorhunt_df):
             extracted_data["colorhunt"] = colorhunt_df
 
     if flags["ebay_seller_hub"]:
@@ -72,7 +68,7 @@ def transform_data(data):
     transformed_data = {}
 
     if "colorhunt" in data:
-        colorhunt_df: pd.DataFrame = data["colorhunt"][::-1]
+        colorhunt_df: pd.DataFrame = data["colorhunt"]
         colorhunt_df.reset_index(drop=True, inplace=True)
         colorhunt_df.reset_index(inplace=True)
 
@@ -114,6 +110,7 @@ def transform_data(data):
     if "ebay_browse" in data:
         ebay_browse_df: pd.DataFrame = data["ebay_browse"]
         ebay_browse_clothes_df = ebay_browse_df[["item_id", "title", "img_url"]].dropna()
+        ebay_browse_clothes_df.rename(columns={"img_url": "image_url"}, inplace=True)
         ebay_browse_clothes_df["source"] = "Ebay Browse API"
         clothes_df = pd.concat([clothes_df, ebay_browse_clothes_df])
 
@@ -136,28 +133,37 @@ def load_data(data):
 
     if "palettes" in data:
         palette_tags_df: pd.DataFrame = data["palette_tags"]
-        palette_tags_df.to_sql("palette_tags", conn, if_exists="replace", index=False)
+        cursor.executemany("""
+            INSERT OR IGNORE INTO palette_tags (name, is_colour_tag)
+            VALUES (?, ?)
+        """, palette_tags_df.values.tolist())
 
         palettes_df: pd.DataFrame = data["palettes"]
         cursor.executemany("""
-            INSERT INTO "palettes" ("id", "likes", "submission_date", "color_hunt_id")
+            INSERT INTO palettes (id, likes, submission_date, color_hunt_id)
             VALUES (?, ?, ?, ?)
-            ON CONFLICT ("color_hunt_id")
-            DO UPDATE SET "likes" = excluded."likes", "submission_date" = excluded."submission_date"
+            ON CONFLICT (color_hunt_id)
+            DO UPDATE SET likes=excluded.likes, submission_date=excluded.submission_date
         """, palettes_df.values.tolist())
 
         palette_colours_df: pd.DataFrame = data["palette_colours"]
-        palette_colours_df.to_sql("palette_colours", conn, if_exists="replace", index=False)
+        cursor.executemany("""
+            INSERT OR IGNORE INTO palette_colours (palette_id, colour)
+            VALUES (?, ?)
+        """, palette_colours_df.values.tolist())
 
         palette_tag_associations_df: pd.DataFrame = data["palette_tag_associations"]
-        palette_tag_associations_df.to_sql("palette_tag_associations", conn, if_exists="replace", index=False)
+        cursor.executemany("""
+            INSERT OR IGNORE INTO palette_tag_associations (palette_id, tag)
+            VALUES (?, ?)
+        """, palette_tag_associations_df.values.tolist())
 
         conn.commit()
 
     if "clothes" in data:
         clothes_df: pd.DataFrame = data["clothes"]
         cursor.executemany("""
-            INSERT OR IGNORE INTO "clothes" ("item_id", "title", "image_url", "source")
+            INSERT OR IGNORE INTO clothes (item_id, title, image_url, source)
             VALUES (?, ?, ?, ?)
         """, clothes_df.values.tolist())
         conn.commit()
@@ -177,4 +183,4 @@ def etl_pipeline(**flags):
 
 
 if __name__ == "__main__":
-    etl_pipeline(colorhunt=True)
+    etl_pipeline(etsy=True, ebay_seller_hub=True, ebay_browse=True)
