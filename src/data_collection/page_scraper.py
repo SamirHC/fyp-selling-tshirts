@@ -22,6 +22,10 @@ class PageScraper(ABC):
             df = cls.scrape_html_to_dataframe(abspath)
             dfs.append(df)
 
-        df = pd.concat(dfs, ignore_index=True).drop_duplicates()
-        df.reset_index(inplace=True)
+        if len(dfs):
+            df = pd.concat(dfs, ignore_index=True).drop_duplicates()
+            df.reset_index(inplace=True)
+        else:
+            print(f"No HTML files to scrape in {cls.BASE_HTML_DIR}. Returning empty DataFrame.")
+            df = pd.DataFrame()
         return df
