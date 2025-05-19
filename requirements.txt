@@ -21,3 +21,4 @@ onnxruntime
 selenium
 cairosvg
 openai
+torchvision

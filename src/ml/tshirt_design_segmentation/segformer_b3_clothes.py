@@ -32,6 +32,7 @@ class SegformerB3Clothes:
 
     @staticmethod
     def segment_clothes(image: Image.Image):
+        image = image.convert("RGB")
         inputs = SegformerB3Clothes.processor(images=image, return_tensors="pt")
 
         outputs = SegformerB3Clothes.model(**inputs)

@@ -10,12 +10,15 @@ from src.ml.tshirt_design_segmentation import segformer_b3_clothes
 
 
 class TshirtDesignSegmentationModel(ABC):
-    def extract_design(self, image):
-        return image
+    def extract_design(self, image: Image.Image) -> Image.Image:
+        return image.crop(self.extract_design_bbox(image))
+
+    def extract_design_bbox(self, image: Image.Image) -> tuple:
+        return (0, 0, image.width, image.height)
 
 
 class OptimalSegmentation(TshirtDesignSegmentationModel):
-    def extract_design(self, image: Image.Image):
+    def extract_design_bbox(self, image: Image.Image):
         SIZE = 64
         STRIDE = 4
 
@@ -25,7 +28,7 @@ class OptimalSegmentation(TshirtDesignSegmentationModel):
 
         colors = np.array(resized_image.convert("RGB"))
         edges = cv2.Canny(cv2.cvtColor(colors, cv2.COLOR_RGB2GRAY), threshold1=50, threshold2=150)
-        print(colors.shape, edges.shape)
+        #print(colors.shape, edges.shape)
         data = np.concatenate((colors, edges[:, :, np.newaxis]), axis=-1)
 
         best = 0, SIZE, 0, SIZE
@@ -50,9 +53,9 @@ class OptimalSegmentation(TshirtDesignSegmentationModel):
                 optimum = val
                 best = x1 * resize_x, y1 * resize_y, x2 * resize_x, y2 * resize_y
             
-            print(f"Best: {best}, Opt: {optimum}, {x1,x2,y1,y2}")
+            #print(f"Best: {best}, Opt: {optimum}, {x1,x2,y1,y2}")
         
-        return image.crop(best)
+        return best
     
     def opt_func(self, xs, ys):
         print(xs)
@@ -86,7 +89,7 @@ class OptimalSegmentation(TshirtDesignSegmentationModel):
 
 
 class EntropySegmentation(TshirtDesignSegmentationModel):
-    def extract_design(self, image: Image.Image):
+    def extract_design_bbox(self, image: Image.Image):
         SIZE = 64
         STRIDE = 4
 
@@ -118,9 +121,9 @@ class EntropySegmentation(TshirtDesignSegmentationModel):
                 optimum = val
                 best = x1 * resize_x, y1 * resize_y, x2 * resize_x, y2 * resize_y
             
-            print(f"Best: {best}, Opt: {optimum}, {x1,x2,y1,y2}")
+            #print(f"Best: {best}, Opt: {optimum}, {x1,x2,y1,y2}")
         
-        return image.crop(best)
+        return best
     
     def entropy(self, data):
         EPS = 1e-10
@@ -132,7 +135,7 @@ class EntropySegmentation(TshirtDesignSegmentationModel):
 
 
 class ContourSegmentation(TshirtDesignSegmentationModel):
-    def extract_design(self, image: Image.Image):
+    def extract_design_bbox(self, image: Image.Image):
         SIZE = 32
         CENTRALITY = 0.6
         MIN_X, MAX_X = SIZE*(1-CENTRALITY)/2, SIZE*(1+CENTRALITY)/2
@@ -145,7 +148,7 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
 
         grey = np.array(resized_image.convert("L"))
         edges = cv2.Canny(grey, threshold1=50, threshold2=150)
-        Image.fromarray(edges).show()
+        #Image.fromarray(edges).show()
 
         contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
@@ -164,13 +167,13 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
             if not (MIN_Y < (y+h)/2 < MAX_Y):
                 break
 
-            print(rect)
+            #print(rect)
             rects.append(rect)
             densities.append(np.sum(edges[x:x+w, y:y+h])/(w*h))
 
         if len(densities) > 1:
             delta_density = np.array([d2/d1 for d1, d2 in zip(densities, densities[1:])])
-            print(delta_density)
+            #print(delta_density)
             x, y, w, h = rects[np.argmax(delta_density)+1]
         else:
             x, y, w, h = rects[0]
@@ -179,48 +182,44 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
         w = int((w+2)*resize_x)
         h = int((h+2)*resize_y)
 
-        return image.crop((x, y, x+w, y+h))
+        return (x, y, x+w, y+h)
 
 
 class ProceduralSegmentation(TshirtDesignSegmentationModel):
-    def extract_design(self, image: Image.Image):
+    def extract_design_bbox(self, image: Image.Image):
         size = 64
         resize_x = image.width / size
         resize_y = image.height / size
         res = image.resize((size, size))
         edges = image.filter(ImageFilter.FIND_EDGES).convert("1")
         edges = edges.filter(ImageFilter.MedianFilter)
-        edges.show()
-        print(np.array(edges))
-        res.show()
+        #edges.show()
+        #print(np.array(edges))
+        #res.show()
         arr = np.array(res)
         opaque = arr[:, :, 3] >= 200
 
         row_indices = np.where(np.sum(opaque, axis=1) > 32)[0]
-        print(row_indices)
+        #print(row_indices)
         col_indices = np.where(np.sum(opaque, axis=0) > 26)[0]
         try:
             y1, y2 = np.min(row_indices) * resize_y, np.max(row_indices) * resize_y
             x1, x2 = np.min(col_indices) * resize_x, np.max(col_indices) * resize_x
-            return image.crop((x1, y1, x2, y2))
+            return (x1, y1, x2, y2)
         except:
-            return image
+            return super().extract_design_bbox(image)
 
 
 class UNetSegmentation(TshirtDesignSegmentationModel):
     def __init__(self):
         model_path = os.path.join("data", "models", "TshirtPrintImageSegmentationModel1.pt")
 
-    def extract_design(self, image: Image.Image):
-        # TODO
-        return image
-
 
 class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
     def __init__(self):
         self.model = segformer_b3_clothes.SegformerB3Clothes
 
-    def extract_design(self, image: Image.Image):
+    def extract_design_bbox(self, image: Image.Image):
         size = 64
         resize_x = image.width / size
         resize_y = image.height / size
@@ -235,9 +234,9 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
         try:
             y1, y2 = np.min(row_indices) * resize_y, np.max(row_indices) * resize_y
             x1, x2 = np.min(col_indices) * resize_x, np.max(col_indices) * resize_x
-            return image.crop((x1, y1, x2, y2))
+            return (x1, y1, x2, y2)
         except:
-            return image
+            return super().extract_design_bbox(image)
 
 
 
