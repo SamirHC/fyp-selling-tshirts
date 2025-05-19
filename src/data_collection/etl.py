@@ -36,7 +36,7 @@ def extract_data(**flags):
     extracted_data = {}
 
     if flags["colorhunt"]:
-        colorhunt_html_path = "data/html/color_hunt_palettes/Color Hunt 2025-05-18 18:21:37.html"  # ColorHuntPageScraper.download_html()
+        colorhunt_html_path = ColorHuntPageScraper.download_html()
         colorhunt_df = ColorHuntPageScraper.scrape_html_to_dataframe(colorhunt_html_path)
         if len(colorhunt_df):
             extracted_data["colorhunt"] = colorhunt_df
@@ -183,4 +183,4 @@ def etl_pipeline(**flags):
 
 
 if __name__ == "__main__":
-    etl_pipeline(etsy=True, ebay_seller_hub=True, ebay_browse=True)
+    etl_pipeline(colorhunt=True, etsy=True, ebay_seller_hub=True, ebay_browse=True)
