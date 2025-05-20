@@ -54,8 +54,17 @@ class SegformerB3Clothes:
 
     @staticmethod
     def segment_upper_clothes(image: Image.Image):
+        """
+        returns a binary mask of the upper clothes region
+        """
         seg = SegformerB3Clothes.seg_to_pil_image(SegformerB3Clothes.segment_clothes(image))
         return Image.fromarray(np.array(seg) == SegformerB3Clothes.Labels.Upperclothes)
+
+    @staticmethod
+    def apply_mask(image: Image.Image, mask: Image.Image):
+        assert mask.mode == "1"
+        image = image.convert("RGB")
+        return Image.fromarray(np.array(image) * np.repeat(np.array(mask)[:,:,np.newaxis], 3, axis=2))
 
 
 if __name__ == "__main__":
@@ -70,5 +79,6 @@ if __name__ == "__main__":
         url = tshirt_df.iloc[i]["img_url"]
         image = utils.get_image_from_url(url).convert("RGB")
 
-        pred_seg = Image.fromarray(np.array(image) * np.repeat(np.array(SegformerB3Clothes.segment_upper_clothes(image))[:,:,np.newaxis], 3, axis=2))
+        mask = SegformerB3Clothes.segment_upper_clothes(image)
+        pred_seg = SegformerB3Clothes.apply_mask(image, mask)
         pred_seg.show()
