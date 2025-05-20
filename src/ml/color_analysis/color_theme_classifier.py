@@ -9,7 +9,7 @@ from sklearn.cluster import KMeans
 from src.data_collection import palettes
 
 
-color_df = palettes.get_palette_data()
+color_df = palettes.get_palette_data_db()
 
 
 class RGBColorThemeClassifier:
