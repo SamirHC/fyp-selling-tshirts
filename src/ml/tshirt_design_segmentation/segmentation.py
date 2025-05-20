@@ -17,6 +17,10 @@ class TshirtDesignSegmentationModel(ABC):
         return (0, 0, image.width, image.height)
 
 
+class NoSegmentation(TshirtDesignSegmentationModel):
+    pass
+
+
 class OptimalSegmentation(TshirtDesignSegmentationModel):
     def extract_design_bbox(self, image: Image.Image):
         SIZE = 64

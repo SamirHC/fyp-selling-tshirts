@@ -1,8 +1,10 @@
 import numpy as np
+from PIL import ImageDraw
 import torch
 from torchvision.ops import box_iou
 
 from src.ml.tshirt_design_segmentation.segmentation import (
+    NoSegmentation,
     ContourSegmentation,
     ProceduralSegmentation,
     EntropySegmentation,
@@ -53,27 +55,31 @@ def modified_iou(rect1, rect2_inner, rect2_outer) -> float:
 def label():
     import os 
 
-    image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs.pickle")
+    image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs", "labelled_image_bboxs.pickle")
     tshirt_df = utils.load_data(image_df_path)
     print(tshirt_df)
 
-    quit()
-    with open("data/dataframes/bboxs", "r") as f:
-        for i, row in tshirt_df.iterrows():
-            print(row["img_url"])
-            try:
-                print(f"Input for image {i}")
-                x,y,w,h = bbox = eval(f.readline()[:-1])
-                print(bbox)
-                tshirt_df.loc[i, ["x", "y", "w", "h"]] = bbox
-                
-                # url = row["img_url"]
-                # image = utils.get_image_from_url(url).convert("RGB")
-                # cropped = image.crop((x,y,x+w,y+h))
-                # cropped.show()
+    with open("data/dataframes/labelled_image_bboxs/tight_bboxs.csv", "r") as f:
+        tight_bboxs = [eval(row) for row in f.read().splitlines()]
+    with open("data/dataframes/labelled_image_bboxs/relaxed_bboxs.csv", "r") as f:
+        relaxed_bboxs = [eval(row) for row in f.read().splitlines()]
 
-            except Exception as e:
-                print(f"error on {i}th: {e}")
+    print(tight_bboxs)
+    print(relaxed_bboxs)
+    for i, row in tshirt_df.iterrows():
+        try:
+            x,y,w,h = tshirt_df.loc[i, ["x", "y", "w", "h"]] = tight_bboxs[i]
+            xr,yr,wr,hr = tshirt_df.loc[i, ["xr", "yr", "wr", "hr"]] = relaxed_bboxs[i]
+
+            url = row["img_url"]
+            image = utils.get_image_from_url(url).convert("RGB")
+            draw = ImageDraw.Draw(image)
+            draw.rectangle((x,y,x+w,y+h), outline="red", width=3)
+            draw.rectangle((xr,yr,xr+wr,yr+hr), outline="green", width=3)
+            image.show()
+
+        except Exception as e:
+            print(f"error on {i}th: {e}")
 
     utils.save_data(tshirt_df, image_df_path)
 
@@ -82,12 +88,14 @@ def conduct_evaluation(image_df_path):
     tshirt_df = utils.load_data(image_df_path)
 
     seg_models: list[TshirtDesignSegmentationModel] = [
+        NoSegmentation(),
         ContourSegmentation(),
         ProceduralSegmentation(),
         EntropySegmentation(),
         SegformerB3ClothesSegmentation()
     ]
-    scores = [[] for _ in seg_models]
+    iou_scores = [[] for _ in seg_models]
+    miou_scores = [[] for _ in seg_models]
 
     for i, row in tshirt_df.iterrows():
         print(i)
@@ -98,38 +106,49 @@ def conduct_evaluation(image_df_path):
             actual_bbox = tuple(row[["x","y","w","h"]])
             if actual_bbox == (0,0,0,0):
                 continue
+            relaxed_bbox = tuple(row[["xr","yr","wr","hr"]])
             extracted_bbox = model.extract_design_bbox(image)
+            
             iou_score = iou(extracted_bbox, actual_bbox)
-            miou_score = modified_iou(extracted_bbox, actual_bbox, actual_bbox)
-            print(iou_score, miou_score, f"Error: {abs(iou_score - miou_score)}")
-            scores[j].append(miou_score)
+            iou_scores[j].append(iou_score)
+            
+            miou_score = modified_iou(extracted_bbox, actual_bbox, relaxed_bbox)
+            miou_scores[j].append(miou_score)
 
-    contour_scores = np.array(scores[0])
+    baseline_scores = np.array(miou_scores[0])
+    print("Baseline:")
+    print(baseline_scores)
+    print(f"Mean MIoU score: {np.mean(baseline_scores)}")
+
+    contour_scores = np.array(miou_scores[1])
     print("Contour:")
     print(contour_scores)
-    print(f"Mean score: {np.mean(contour_scores)}")
+    print(f"Mean MIoU score: {np.mean(contour_scores)}")
 
-    procedural_scores = np.array(scores[1])
+    procedural_scores = np.array(miou_scores[2])
     print("Procedural:")
     print(procedural_scores)
-    print(f"Mean score: {np.mean(procedural_scores)}")
+    print(f"Mean MIoU score: {np.mean(procedural_scores)}")
 
-    entropy_scores = np.array(scores[2])
+    entropy_scores = np.array(miou_scores[3])
     print("Entropy:")
     print(entropy_scores)
-    print(f"Mean score: {np.mean(entropy_scores)}")
+    print(f"Mean MIoU score: {np.mean(entropy_scores)}")
 
-    segformerB3_scores = np.array(scores[3])
+    segformerB3_scores = np.array(miou_scores[4])
     print("SegformerB3:")
     print(segformerB3_scores)
-    print(f"Mean score: {np.mean(segformerB3_scores)}")
+    print(f"Mean MIoU score: {np.mean(segformerB3_scores)}")
 
 
 if __name__ == "__main__":
     import os
 
-    image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs.pickle")
+    image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs", "labelled_image_bboxs.pickle")
     tshirt_df = utils.load_data(image_df_path)
-    print(tshirt_df)
+    #print(tshirt_df)
+    #for i, row in tshirt_df.iterrows():
+    #    print(i+1, row["img_url"])
 
+    #label()
     conduct_evaluation(image_df_path)
