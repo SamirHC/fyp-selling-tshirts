@@ -7,6 +7,7 @@ from PIL import Image, ImageFilter
 import numpy as np
 
 from src.ml.tshirt_design_segmentation import segformer_b3_clothes
+from src.ml.genai.text_gen import DeepSeekLLM
 
 
 class TshirtDesignSegmentationModel(ABC):
@@ -242,6 +243,54 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
         except:
             return super().extract_design_bbox(image)
 
+
+class LLMSegmentation(TshirtDesignSegmentationModel):
+    def __init__(self):
+        self.model = DeepSeekLLM()
+    def extract_design_bbox(self, image: Image.Image):
+        SIZE = 16
+
+        resize_x = image.width / SIZE
+        resize_y = image.height / SIZE
+        resized_image = image.resize((SIZE, SIZE))
+
+        grey = np.array(resized_image.convert("L"))
+        edges = cv2.Canny(grey, threshold1=50, threshold2=150)
+        edge_string = "\n".join("".join(str(int(item == 255)) for item in row) for row in edges)
+        print(edge_string)
+        
+        completion = self.model.client.chat.completions.create(
+            model="deepseek/deepseek-r1:free",
+            messages=[
+                {"role": "system",
+                 "content": "ONLY RESPOND WITH A PYTHON TUPLE IN THE FORMAT (x, y, width, height). NO EXPLANATIONS OR EXTRA TEXT."},
+                {"role": "user",
+                "content": f"Given the Tshirt edge binary mask, return the bounding box of the Tshirt, excluding the sleeves:\n{edge_string}."}
+            ],
+        )
+        print(completion)
+        result = str(completion.choices[0].message.content)
+        print(result)
+        success = True
+        try:
+            stripped = result.strip("() ")
+            if not stripped:
+                success = False            
+            result = tuple(int(num.strip()) for num in stripped.split(","))
+            success = len(result) == 4
+        except:
+            success = False
+
+        if success:
+            x, y, w, h = result
+            x *= resize_x
+            y *= resize_y
+            w *= resize_x
+            h *= resize_y
+
+            return (x, y, w, h)
+        else:
+            return super().extract_design_bbox(image)
 
 
 if __name__ == "__main__":
