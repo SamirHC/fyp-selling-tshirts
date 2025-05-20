@@ -12,7 +12,7 @@ from src.ml.tshirt_design_segmentation.segmentation import (
 from src.common import utils
 
 
-def rect_intersect(rect1: tuple, rect2: tuple) -> float:
+def rect_intersect(rect1: tuple, rect2: tuple) -> tuple:
     x1, y1, w1, h1 = rect1
     x2, y2, w2, h2 = rect2
 
@@ -20,6 +20,9 @@ def rect_intersect(rect1: tuple, rect2: tuple) -> float:
     yi = max(y1, y2)
     wi = min(x1 + w1, x2 + w2) - xi
     hi = min(y1 + h1, y2 + h2) - yi
+
+    if wi < 0 or hi < 0:
+        wi = hi = 0
 
     return xi, yi, wi, hi
 
@@ -42,12 +45,13 @@ def modified_iou(rect1, rect2_inner, rect2_outer) -> float:
     """
     returns |A intersect B|/|(A-(A intersect C)) union B| for B <= C
     """
+    print("Inside miou", rect1, rect2_inner, rect2_outer)
     assert rect_intersect(rect2_inner, rect2_outer) == rect2_inner
     return rect_area(rect_intersect(rect1, rect2_inner)) / (rect_area(rect1) - rect_area(rect_intersect(rect1, rect2_outer)) + rect_area(rect2_inner))
 
 
 def label():
-    import os
+    import os 
 
     image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs.pickle")
     tshirt_df = utils.load_data(image_df_path)
@@ -95,9 +99,10 @@ def conduct_evaluation(image_df_path):
             if actual_bbox == (0,0,0,0):
                 continue
             extracted_bbox = model.extract_design_bbox(image)
-            # score = iou(extracted_bbox, actual_bbox)
-            score = modified_iou(extracted_bbox, actual_bbox, actual_bbox)
-            scores[j].append(score)
+            iou_score = iou(extracted_bbox, actual_bbox)
+            miou_score = modified_iou(extracted_bbox, actual_bbox, actual_bbox)
+            print(iou_score, miou_score, f"Error: {abs(iou_score - miou_score)}")
+            scores[j].append(miou_score)
 
     contour_scores = np.array(scores[0])
     print("Contour:")
