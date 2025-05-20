@@ -60,22 +60,21 @@ CREATE TABLE IF NOT EXISTS "print_design_palettes" (
 CREATE TABLE IF NOT EXISTS "print_design_regions" (
   "source" TEXT,
   "item_id" TEXT,
+  "algorithm" TEXT,
   "left" INTEGER,
   "top" INTEGER,
   "width" INTEGER,
   "height" INTEGER,
-  PRIMARY KEY ("source", "item_id")
+  PRIMARY KEY ("source", "item_id", "algorithm")
   FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
 );
 
---DROP TABLE IF EXISTS "palette_distances";
+--DROP TABLE IF EXISTS "print_design_tags";
 
-CREATE TABLE IF NOT EXISTS "palette_distances" (
-  "palette_id" INTEGER,
+CREATE TABLE IF NOT EXISTS "print_design_tags" (
   "source" TEXT,
   "design_id" TEXT,
-  "distance" FLOAT,
-  PRIMARY KEY ("palette_id", "source", "design_id")
-  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
+  "tag" TEXT,
+  PRIMARY KEY ("source", "design_id", "tag")
   FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
 );

@@ -183,4 +183,4 @@ def etl_pipeline(**flags):
 
 
 if __name__ == "__main__":
-    etl_pipeline(colorhunt=True, etsy=True, ebay_seller_hub=True, ebay_browse=True)
+    etl_pipeline(colorhunt=False, etsy=False, ebay_seller_hub=False, ebay_browse=False)
