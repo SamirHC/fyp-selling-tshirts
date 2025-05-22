@@ -78,3 +78,14 @@ CREATE TABLE IF NOT EXISTS "print_design_tags" (
   PRIMARY KEY ("source", "design_id", "tag")
   FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
 );
+
+--DROP TABLE IF EXISTS "print_design_nearest_palette";
+
+CREATE TABLE IF NOT EXISTS "print_design_nearest_palette" (
+  "source" TEXT,
+  "design_id" TEXT,
+  "palette_id" INTEGER,
+  PRIMARY KEY ("source", "design_id", "palette_id")
+  FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
+  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
+);
