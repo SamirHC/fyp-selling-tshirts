@@ -239,6 +239,7 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
         try:
             y1, y2 = np.min(row_indices) * resize_y, np.max(row_indices) * resize_y
             x1, x2 = np.min(col_indices) * resize_x, np.max(col_indices) * resize_x
+            assert x1 < x2 and y1 < y2
             return (x1, y1, x2, y2)
         except:
             return super().extract_design_bbox(image)
