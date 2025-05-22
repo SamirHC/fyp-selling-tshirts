@@ -37,9 +37,12 @@ class DeepSeekLLM(TextModel):
         completion = self.client.chat.completions.create(
         model="deepseek/deepseek-r1:free",
         messages=[
+            {"role":"system",
+             "content": "WHEN GENERATING YOUR ANSWER, DO NOT INCLUDE EXPLANATIONS, JUSTIFICATIONS OR EXTRA OUTPUT. ONLY ANSWER EXACTLY WHAT IS ASKED."
+            },
             {
             "role": "user",
-            "content": prompt
+            "content": prompt,
             }
         ]
         )

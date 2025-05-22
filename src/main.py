@@ -7,15 +7,9 @@ from src.ml.genai import image_gen, text_gen
 from src.design_generation import generate
 
 
-if __name__ == "__main__":
-    import os
-
-    DB_PATH = os.path.join("data","db","dev_database.db")
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    source, item_id =cursor.execute("""
-        SELECT source, item_id FROM clothes
+def get_tags_title_colours(cursor: sqlite3.Cursor) -> list[str]:
+    source, item_id, title = cursor.execute("""
+        SELECT source, item_id, title FROM clothes
         WHERE EXISTS (
             SELECT source, design_id FROM print_design_tags AS pdt
             WHERE pdt.source=clothes.source AND pdt.design_id=clothes.item_id
@@ -28,9 +22,26 @@ if __name__ == "__main__":
             WHERE source=? AND design_id=?
         """, (source, item_id)).fetchall()
     ]
+    colours = [x[0] for x in cursor.execute("""
+        SELECT colour FROM print_design_nearest_palette
+        NATURAL JOIN palette_colours
+        WHERE source=? AND design_id=?
+    """, (source, item_id)).fetchall()]
+
+    return tags, title, colours
+
+
+if __name__ == "__main__":
+    import os
+
+    DB_PATH = os.path.join("data","db","dev_database.db")
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    tags, title, colours = get_tags_title_colours(cursor)
 
     conn.close()
-    print(tags)
+    print(tags, title, colours)
 
     image_model = image_gen.DummyImageModel()
     if config.GPU == 0 and config.PAYMENT_ACTIVE:
@@ -38,9 +49,13 @@ if __name__ == "__main__":
     elif config.GPU == 1:
         image_model = image_gen.StableDiffusion1_5_Txt2ImgModel()
 
+    text_model = text_gen.DeepSeekLLM()
+
     design = generate.generate_design(tags, **{
-        "text_model": text_gen.DeepSeekLLM(),
-        "image_model": image_model
+        "text_model": text_model,
+        "image_model": image_model,
+        "title": title,
+        "colours": colours,
     })
 
     temp_path = os.path.join("out", f"main {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.svg")
