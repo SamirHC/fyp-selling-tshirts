@@ -17,7 +17,7 @@ login(config.HUGGING_FACE_TOKEN)
 
 class ImageModel(ABC):
     @abstractmethod
-    def generate_image(self, **kwargs):
+    def generate_image(self, **kwargs) -> Image.Image:
         pass
 
 
