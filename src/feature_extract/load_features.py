@@ -1,8 +1,6 @@
 import os
 import sqlite3
 
-import pandas as pd
-
 from src.common import utils
 from src.data_collection import palettes
 from src.ml.color_analysis.color_theme_classifier import CIELabColorThemeClassifier
@@ -28,7 +26,7 @@ def get_clothes_img_url(cursor: sqlite3.Cursor, clothes_key: tuple[str, str]) ->
 
 
 def load_features(n=-1):
-    segmentation_model = segmentation.SegformerB3ClothesSegmentation()
+    segmentation_model = segmentation.ContourSegmentation()
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -67,6 +65,12 @@ def load_features(n=-1):
             VALUES (?, ?, ?)
         """
         cursor.executemany(query, ((key[0], key[1], colour) for colour in colours))
+
+        query = """
+            INSERT OR IGNORE INTO print_design_nearest_palette (source, design_id, palette_id)
+            VALUES (?, ?, ?)
+        """
+        cursor.execute(query, (key[0], key[1], palette_data["row_idx"]))
 
         # TODO: 
         #  - Resnet Image Classification or title NLP: get nouns and include in tags
