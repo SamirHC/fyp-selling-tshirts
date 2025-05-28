@@ -41,6 +41,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     if colours:
         prompt += f", using the colours ({",".join(colours)})"
     prompt += f": {content_prompt}"
+    prompt += " DO NOT INCLUDE TEXT IN THE IMAGE, DO NOT INCLUDE ANY CLOTHING, ONLY EXTRACT THE FULL PRINT DESIGN."
 
     print(f"Tags: {tags}")
     print(f"Colours: {colours}")
