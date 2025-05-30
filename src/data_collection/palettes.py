@@ -95,12 +95,19 @@ def get_other_tag_counts(palette_data: pd.DataFrame) -> pd.Series:
 
 
 def show_likes(palette_data: pd.DataFrame):
-    likes_df = palette_data["likes"]
-    plt.scatter(likes_df.index, likes_df, s=10, marker="x")
-    plt.yscale("log")
+    x = np.array(palette_data["palette_id"])
+    y = np.array(palette_data["likes"])
+
+    df = pd.DataFrame({"x": x, "log_y": np.log(y)})
+    window_size = 200
+    df["log_y_smooth"] = df["log_y"].rolling(window=window_size, center=True, min_periods=1).median()
+
+    plt.scatter(df["x"], df["log_y"], s=10, marker="x", label="Log-Likes")
+    plt.plot(df["x"], df["log_y_smooth"], color="red", label="Moving Median")
     plt.xlabel("Nth Palette Submission to Color Hunt")
     plt.ylabel("Number of Likes (Log Scale)")
     plt.grid(True)
+    plt.legend()
     plt.show()
 
 
