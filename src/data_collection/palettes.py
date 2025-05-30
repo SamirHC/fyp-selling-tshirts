@@ -96,7 +96,7 @@ def get_other_tag_counts(palette_data: pd.DataFrame) -> pd.Series:
 
 def show_likes(palette_data: pd.DataFrame):
     likes_df = palette_data["likes"]
-    plt.scatter(likes_df.index, likes_df.iloc[::-1], s=10, marker="x")
+    plt.scatter(likes_df.index, likes_df, s=10, marker="x")
     plt.yscale("log")
     plt.xlabel("Nth Palette Submission to Color Hunt")
     plt.ylabel("Number of Likes (Log Scale)")
