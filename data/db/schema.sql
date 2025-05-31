@@ -89,3 +89,15 @@ CREATE TABLE IF NOT EXISTS "print_design_nearest_palette" (
   FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
   FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
 );
+
+--DROP TABLE IF EXISTS "fonts";
+
+CREATE TABLE IF NOT EXISTS "fonts" (
+  "filename" TEXT,
+  "base_font_name" TEXT,
+  "file_format" TEXT,
+  "creator" TEXT,
+  "category" TEXT,
+  "theme" TEXT,
+  PRIMARY KEY ("filename")
+);
