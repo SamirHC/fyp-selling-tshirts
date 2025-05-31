@@ -63,6 +63,11 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
         prompt=prompt
     ).resize((256, 256))
 
+    # Get a batch of prompts and images, and compute fitness
+    # Fitness: minimises colour palette distance
+    #          minimises mask occurence when using segformerb3 model
+    #          scores highly 
+
     # TODO:
     #  - Create slogan and split
     #  - Choose font based on tags
