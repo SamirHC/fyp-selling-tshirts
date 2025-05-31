@@ -7,20 +7,7 @@ from src.design_generation.template import TopBottomTextWithCenterImage
 from src.ml.genai import image_gen, text_gen
 
 
-def generate_design(tags: list[str], **kwargs) -> ir.Design:
-    if len(tags) < 2:
-        tags += ["minimalist", "vintage"]
-    title: str = kwargs.get("title", None)
-    colours: list[str] = kwargs.get("colours", None)
-
-    text_model: text_gen.TextModel = (
-        kwargs.get("text_model", text_gen.DummyLLM())
-    )
-    image_model: image_gen.ImageModel = (
-        kwargs.get("image_model", image_gen.DummyImageModel())
-    )
-
-    # Prompt Generating Prompt
+def create_prompt_for_image_prompt(tags, title, text_model: text_gen.TextModel):
     prompt_gen_prompt = (
         "Return ONLY a Python string of a well-crafted prompt for a generative AI model "
         f"using the tags ({",".join(tags)}) only to emphasise the colour themes, not the content."
@@ -34,7 +21,12 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
         "where the nouns of the image are determined appropriately based on the colour/style tags."
     prompt_gen_prompt += " DO NOT REQUEST IN THE PROMPT TO PRODUCE TEXT."
 
-    content_prompt = text_model.generate_text(prompt_gen_prompt)
+    return text_model.generate_text(prompt_gen_prompt)
+
+
+def create_prompt_for_image(tags, title, text_model, colours):
+    # Prompt Generating Prompt
+    content_prompt = create_prompt_for_image_prompt(tags, title, text_model)
 
     # Image Generating Prompt
     prompt = f"Create a T-shirt print design graphic, centered, transparent background, no text"
@@ -43,6 +35,24 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     prompt += f": {content_prompt}"
     prompt += " DO NOT INCLUDE TEXT IN THE IMAGE, DO NOT INCLUDE ANY CLOTHING, ONLY EXTRACT THE FULL PRINT DESIGN."
 
+    return prompt
+
+
+def generate_design(tags: list[str], **kwargs) -> ir.Design:
+    if len(tags) < 2:
+        tags += ["minimalist", "vintage"]
+    title: str = kwargs.get("title", None)
+    colours: list[str] = kwargs.get("colours", None)
+
+    text_model: text_gen.TextModel = (
+        kwargs.get("text_model", text_gen.DummyLLM())
+    )
+    image_model: image_gen.ImageModel = (
+        kwargs.get("image_model", image_gen.DummyImageModel())
+    )
+
+    # Prompt Information
+    prompt = create_prompt_for_image(tags, title, text_model, colours)
     print(f"Tags: {tags}")
     print(f"Colours: {colours}")
     print(f"Title: {title}")
