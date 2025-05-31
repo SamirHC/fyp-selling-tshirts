@@ -154,23 +154,21 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
         self.model = segformer_b3_clothes.SegformerB3Clothes
 
     def extract_design_bbox(self, image: Image.Image):
-        size = 64
-        resize_x = image.width / size
-        resize_y = image.height / size
-
-        mask = image.resize((size, size))
-        mask.filter(ImageFilter.SHARPEN)
-        mask = self.model.segment_upper_clothes(mask)
-        
+        mask = self.model.segment_upper_clothes(image)
         arr = np.array(mask)
-        row_indices = np.where(np.sum(arr, axis=1) > 32)[0]
-        col_indices = np.where(np.sum(arr, axis=0) > 26)[0]
-        try:
-            y1, y2 = np.min(row_indices) * resize_y, np.max(row_indices) * resize_y
-            x1, x2 = np.min(col_indices) * resize_x, np.max(col_indices) * resize_x
+        rows, cols = np.where(arr)
+        if len(rows) > 0 and len(cols) > 0:
+            y1, y2 = rows.min(), rows.max()
+            x1, x2 = cols.min(), cols.max()
+            w = x2 - x1
+            x1 += w // 5
+            x2 -= w // 5
+            h = y2 - y1
+            y1 += h // 8
+            y2 -= h // 10
             assert x1 < x2 and y1 < y2
             return (x1, y1, x2, y2)
-        except:
+        else:
             return super().extract_design_bbox(image)
 
 
@@ -223,10 +221,10 @@ class LLMSegmentation(TshirtDesignSegmentationModel):
             return super().extract_design_bbox(image)
 
 
-if __name__ == "__main__":
+def main():
     from src.common import utils
 
-    seg_model = ContourSegmentation()
+    seg_model = SegformerB3ClothesSegmentation()
     
     image_df_path = os.path.join("data", "dataframes", "seller_hub_data", "ebay_data.pickle")
     tshirt_df = utils.load_data(image_df_path)
@@ -238,3 +236,7 @@ if __name__ == "__main__":
         seg_image = seg_model.extract_design(image)
         seg_image.show()
         input()
+
+
+if __name__ == "__main__":
+    main()
