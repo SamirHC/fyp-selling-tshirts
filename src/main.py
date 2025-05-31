@@ -2,7 +2,7 @@ import sqlite3
 
 from datetime import datetime
 
-from src.common import config, image_edit
+from src.common import config
 from src.ml.genai import image_gen, text_gen
 from src.design_generation import generate
 
@@ -33,6 +33,7 @@ def get_tags_title_colours(cursor: sqlite3.Cursor) -> list[str]:
 
 if __name__ == "__main__":
     import os
+    import webbrowser
 
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
@@ -40,7 +41,6 @@ if __name__ == "__main__":
     tags, title, colours = get_tags_title_colours(cursor)
 
     conn.close()
-    print(tags, title, colours)
 
     image_model = image_gen.DummyImageModel()
     if config.GPU == 0 and config.PAYMENT_ACTIVE:
@@ -57,8 +57,7 @@ if __name__ == "__main__":
         "colours": colours,
     })
 
-    temp_path = os.path.join("out", f"main {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.svg")
-    with open(temp_path, "w") as f:
+    out_path = os.path.join("out", f"main {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.svg")
+    with open(out_path, "w") as f:
         f.write(design.to_svg())
-    design_image = image_edit.svg_to_png(temp_path)
-    design_image.show()
+    webbrowser.get("firefox").open(out_path)

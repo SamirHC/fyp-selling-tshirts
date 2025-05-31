@@ -9,13 +9,11 @@ from src.common import config
 font_dir = os.path.join("data", "fonts", "dafonts-free-v1", "fonts")
 
 
-def get_font_data(limit=100000, offset=0) -> pd.DataFrame:
+def get_font_data_helper(query, params=None) -> pd.DataFrame:
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
-    result = cursor.execute("""
-        SELECT * FROM fonts LIMIT ? OFFSET ?
-    """, (limit, offset))
+    result = cursor.execute(query, params)
 
     font_data = pd.DataFrame(
         result.fetchall(),
@@ -28,5 +26,31 @@ def get_font_data(limit=100000, offset=0) -> pd.DataFrame:
     return font_data
 
 
+def get_font_data(limit=100000, offset=0) -> pd.DataFrame:
+    query = """
+        SELECT * FROM fonts LIMIT ? OFFSET ?
+    """
+    params = limit, offset
+    return get_font_data_helper(query, params)
+
+
+def get_font_data_by_family(family) -> pd.DataFrame:
+    query = """
+        SELECT * FROM fonts WHERE base_font_name=?
+    """
+    params = (family, )
+    return get_font_data_helper(query, params)
+
+
+def get_random_fonts(limit=1) -> pd.DataFrame:
+    query = """
+        SELECT * FROM fonts ORDER BY RANDOM() LIMIT ?
+    """
+    params = (limit,)
+    return get_font_data_helper(query, params)
+
+
 if __name__ == "__main__":
     print(get_font_data())
+    print(get_font_data_by_family("Among Us"))
+    print(get_random_fonts(10))

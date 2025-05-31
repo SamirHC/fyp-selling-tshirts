@@ -1,7 +1,5 @@
-import random
-
-
 from src.common import constants
+from src.data_collection import fonts, palettes
 from src.design_generation import internal_repr as ir
 from src.design_generation.template import TopBottomTextWithCenterImage
 from src.ml.genai import image_gen, text_gen
@@ -75,11 +73,11 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     design = TopBottomTextWithCenterImage(
         canvas_size=(512, 512),
         image=image,
-        font="Slick",
+        font=fonts.get_random_fonts().iloc[0]["family"],
         font_size=72,
-        color=constants.Color.BLACK,
-        top_text=random.choice(tags),
-        bottom_text=random.choice(tags),
+        color=(constants.Color.BLACK if not colours else palettes.hex_to_rgb(colours[0])),
+        top_text="Good",
+        bottom_text="Vibes",
     ).design
 
     return design

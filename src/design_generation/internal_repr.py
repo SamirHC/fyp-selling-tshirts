@@ -8,9 +8,6 @@ from src.data_collection import fonts
 from src.design_generation import render_text
 
 
-font_df = fonts.get_font_data()
-
-
 class Node(ABC):
     def __init__(self):
         pass
@@ -88,6 +85,7 @@ class TextComponent(Node):
                 )
                 svg.text = self.text
             case "image":
+                font_df = fonts.get_font_data_by_family(self.font_family)
                 image, bbox = render_text.render_text(
                     self.text,
                     font_path=font_df[font_df["family"] == self.font_family].iloc[0]["path"],
@@ -161,6 +159,7 @@ class Design(Node):
                 match dependency:
                     case ("font-family", font_family):
                         # Gets the first font row matching the family
+                        font_df = fonts.get_font_data_by_family(font_family)
                         font_data = font_df[font_df["family"] == font_family].iloc[0]
                         print(font_data)
                         with open(font_data["path"], "rb") as font_file:
@@ -201,9 +200,6 @@ if __name__ == "__main__":
     import os
     import webbrowser
     from src.data_collection import fonts
-
-    font_data = fonts.get_font_data()
-    font_paths = list(font_data["path"])
 
     design = Design(
         canvas_size=(500, 500),
