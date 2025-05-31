@@ -75,7 +75,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     design = TopBottomTextWithCenterImage(
         canvas_size=(512, 512),
         image=image,
-        font="cookie",
+        font="Slick",
         font_size=72,
         color=constants.Color.BLACK,
         top_text=random.choice(tags),

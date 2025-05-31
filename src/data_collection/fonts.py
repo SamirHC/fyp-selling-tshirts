@@ -1,46 +1,31 @@
 import os
-from enum import Enum
+import sqlite3
 
 import pandas as pd
 
-
-class Language(Enum):
-    ENGLISH = "en"
-    JAPANESE = "jp"
+from src.common import config
 
 
-FONT_PATH = os.path.join("data", "fonts")
-EN_FONT_PATH = os.path.join(FONT_PATH, Language.ENGLISH.value)
-JP_FONT_PATH = os.path.join(FONT_PATH, Language.JAPANESE.value)
+font_dir = os.path.join("data", "fonts", "dafonts-free-v1", "fonts")
 
 
-def get_font_data(lang=Language.ENGLISH) -> pd.DataFrame:
-    match lang:
-        case Language.ENGLISH:
-            base_font_dir = EN_FONT_PATH
-        case Language.JAPANESE:
-            base_font_dir = JP_FONT_PATH
-        case _:
-            raise ValueError(f"Language not recognised: {lang}")
-    
-    font_data = []
+def get_font_data(limit=100000, offset=0) -> pd.DataFrame:
+    conn = sqlite3.connect(config.DB_PATH)
+    cursor = conn.cursor()
 
-    for font_name in os.listdir(base_font_dir):
-        font_dir = os.path.join(base_font_dir, font_name)
-        try:
-            for font_path in os.listdir(font_dir):
-                if font_path.endswith("ttf") or font_path.endswith("otf"):
-                    font_data.append({
-                        "path": os.path.join(font_dir, font_path),
-                        "family": font_name,
-                        "lang": lang,
-                        "format": "truetype" if font_path[-3:] == "ttf" else "opentype",
-                    })
+    result = cursor.execute("""
+        SELECT * FROM fonts LIMIT ? OFFSET ?
+    """, (limit, offset))
 
-        except Exception as e:
-            print(f"{font_dir}: {e}")
+    font_data = pd.DataFrame(
+        result.fetchall(),
+        columns=[d[0] for d in cursor.description]
+    )
+    font_data["path"] = font_data["filename"].apply(lambda filename: os.path.join(font_dir, filename))
+    font_data = font_data.rename(columns={"base_font_name": "family", "file_format": "format"})
 
-    return pd.DataFrame(font_data)
+    conn.close()
+    return font_data
 
 
 if __name__ == "__main__":

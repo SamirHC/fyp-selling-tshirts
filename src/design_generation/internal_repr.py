@@ -162,6 +162,7 @@ class Design(Node):
                     case ("font-family", font_family):
                         # Gets the first font row matching the family
                         font_data = font_df[font_df["family"] == font_family].iloc[0]
+                        print(font_data)
                         with open(font_data["path"], "rb") as font_file:
                             font_base64_encoded = base64.b64encode(font_file.read()).decode("utf-8")
                         font_el = etree.SubElement(defs, "style", type="text/css")
@@ -169,7 +170,7 @@ class Design(Node):
                             "\n"
                             "@font-face {\n"
                             f"  font-family: \"{font_family}\";\n"
-                            f"  src: url(\"data:font/{font_data["format"]};base64,{font_base64_encoded}\") format(\"{font_data["format"]}\");\n"
+                            f"  src: url(\"data:font/{font_data["format"]};base64,{font_base64_encoded}\") format(\"{"truetype" if font_data["format"] == "ttf" else "opentype"}\");\n"
                             "}\n"
                         )
 
@@ -221,8 +222,8 @@ if __name__ == "__main__":
                 components=[
                     TextComponent(
                         position=(0, 50),
-                        text="Hello World",
-                        font_family="cookie",
+                        text="HELLO WORLD",
+                        font_family="Among Us",
                         font_size=36,
                         fill=(130, 0, 0)
                     )
