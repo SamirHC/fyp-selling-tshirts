@@ -1,13 +1,9 @@
-import os
 import sqlite3
 
-from src.common import utils
+from src.common import utils, config
 from src.data_collection import palettes
 from src.ml.color_analysis.color_theme_classifier import CIELabColorThemeClassifier
 from src.ml.tshirt_design_segmentation import segmentation
-
-
-DB_PATH = os.path.join("data","db","dev_database.db")
 
 
 def find_clothes_to_feature_extract(cursor: sqlite3.Cursor) -> list:
@@ -28,7 +24,7 @@ def get_clothes_img_url(cursor: sqlite3.Cursor, clothes_key: tuple[str, str]) ->
 def load_features(n=-1):
     segmentation_model = segmentation.ContourSegmentation()
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
     clothes_keys = find_clothes_to_feature_extract(cursor)

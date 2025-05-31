@@ -28,3 +28,4 @@ GPU = int(config["GPU"])
 
 # Runtime Settings
 PAYMENT_ACTIVE = bool(int(config["PAYMENT_ACTIVE"]))
+DB_PATH = config["DB_PATH"]

@@ -3,18 +3,18 @@ import os
 import pandas as pd
 import sqlite3
 
+from src.common import config
 from src.data_collection.color_hunt_scrape import ColorHuntPageScraper
 from src.data_collection.ebay_page_scrape import EbayPageScraper
 from src.data_collection.etsy_page_scrape import EtsyPageScraper
 from src.data_collection import ebay_browse
 
 
-DB_PATH = os.path.join("data","db","dev_database.db")
 SCHEMA_PATH = os.path.join("data","db","schema.sql")
 
 
 def create_tables():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
     with open(SCHEMA_PATH, "r") as file:
@@ -128,7 +128,7 @@ def transform_data(data):
 
 
 def load_data(data):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
     if "palettes" in data:

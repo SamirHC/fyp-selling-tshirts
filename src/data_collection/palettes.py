@@ -6,11 +6,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import skimage
 
-from src.common import utils
+from src.common import utils, config
 
 
 BASE_DIR = os.path.join("data", "dataframes", "color_hunt_palette_data")
-DB_PATH = os.path.join("data","db","dev_database.db")
 
 
 def get_palette_data() -> pd.DataFrame:
@@ -52,7 +51,7 @@ def iterate_through_palette_db(cursor: sqlite3.Cursor):
 
 
 def get_palette_data_db() -> pd.DataFrame:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
     df = pd.DataFrame(iterate_through_palette_db(cursor))

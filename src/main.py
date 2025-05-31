@@ -34,8 +34,7 @@ def get_tags_title_colours(cursor: sqlite3.Cursor) -> list[str]:
 if __name__ == "__main__":
     import os
 
-    DB_PATH = os.path.join("data","db","dev_database.db")
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
     tags, title, colours = get_tags_title_colours(cursor)
