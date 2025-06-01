@@ -4,9 +4,11 @@ import textwrap
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
+import skimage
 
 from src.common import config, utils, constants
 from src.data_collection import palettes
+from src.ml.color_analysis.color_theme_classifier import CIELabColorThemeClassifier
 
 
 def get_visualisable_clothes_keys(cursor: sqlite3.Cursor) -> list:
@@ -77,18 +79,24 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
 
     # Format palettes
     print_design_palette = np.array(
-        palettes.hex_palette_to_rgb_array(print_design_palette.split(","))
-    ).reshape((-1, 1, 3))
+        palettes.hex_palette_to_cielab_array(print_design_palette.split(","))
+    ).reshape((-1, 3))
     matched_palette = np.array(
-        palettes.hex_palette_to_rgb_array(matched_palette.split(","))
-    ).reshape((-1, 1, 3))
+        palettes.hex_palette_to_cielab_array(matched_palette.split(","))
+    ).reshape((-1, 3))
+    palette_distance, matched_palette = CIELabColorThemeClassifier.palette_distance(print_design_palette, matched_palette)
+    print_design_palette.resize((4, 1, 3))
+    matched_palette.resize((4, 1, 3))
+    print_design_palette = (skimage.color.lab2rgb(print_design_palette) * 255).astype(np.uint8)
+    matched_palette = (skimage.color.lab2rgb(matched_palette) * 255).astype(np.uint8)
 
     # Other data
     title = f"Title: \n{textwrap.fill(title, width=30)} \n"
     tags = tags.split(",")
     tag_info = f"Assigned Tags: {"\n".join(tags)} \n"
-    likes = f"Likes: {likes}"
-    text_data = "\n".join((title, tag_info, likes))
+    likes = f"Likes: {likes} \n"
+    palette_distance = f"Palette Distance: {palette_distance}\n"
+    text_data = "\n".join((title, tag_info, likes, palette_distance))
 
     # Create visualisation
     _, axs = plt.subplots(1, 4)

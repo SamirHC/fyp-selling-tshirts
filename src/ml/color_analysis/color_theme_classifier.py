@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -8,8 +10,9 @@ from sklearn.cluster import KMeans
 
 from src.data_collection import palettes
 
-
-color_df = palettes.get_palette_data_db()
+@lru_cache(maxsize=1)
+def get_color_df():
+    return palettes.get_palette_data_db()
 
 
 class RGBColorThemeClassifier:
@@ -114,7 +117,7 @@ class RGBColorThemeClassifier:
 
     @staticmethod
     def compute_distances(colors):
-        df = color_df.copy()
+        df = get_color_df().copy()
         df[["dist", "nearest_colors"]] = df["colors"].apply(
             lambda row_colors: pd.Series(
                 RGBColorThemeClassifier.palette_distance(
@@ -131,7 +134,7 @@ class RGBColorThemeClassifier:
         row_idx, nearest_colors, dist = RGBColorThemeClassifier.find_closest_palette(colors)
         nearest_colors = nearest_colors.astype(np.uint8)
 
-        row = color_df.iloc[row_idx]
+        row = get_color_df().iloc[row_idx]
         colors = [tuple(color) for color in colors]
         nearest_colors = [tuple(color) for color in nearest_colors]
 
@@ -245,7 +248,7 @@ class CIELabColorThemeClassifier:
 
     @staticmethod
     def compute_distances(colors):
-        df = color_df.copy()
+        df = get_color_df().copy()
         df[["dist", "nearest_colors"]] = df["colors"].apply(
             lambda row_colors: pd.Series(
                 CIELabColorThemeClassifier.palette_distance(
@@ -266,7 +269,7 @@ class CIELabColorThemeClassifier:
         )
         nearest_colors = (skimage.color.lab2rgb(nearest_colors) * 255).astype(np.uint8)
 
-        row = color_df.iloc[row_idx]
+        row = get_color_df().iloc[row_idx]
         colors = [tuple(color) for color in colors]
         nearest_colors = [tuple(color) for color in nearest_colors]
 
