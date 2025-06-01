@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import pandas as pd
@@ -182,5 +183,21 @@ def etl_pipeline(**flags):
     load_data(data)
 
 
+def main():
+    parser = argparse.ArgumentParser(description="Run the ETL pipeline with selected data sources.")
+    parser.add_argument("--colorhunt", action="store_true", help="Include ColorHunt scraping")
+    parser.add_argument("--etsy", action="store_true", help="Include Etsy scraping")
+    parser.add_argument("--ebay_seller_hub", action="store_true", help="Include eBay Seller Hub scraping")
+    parser.add_argument("--ebay_browse", action="store_true", help="Include eBay Browse API scraping")
+
+    args = parser.parse_args()
+
+    etl_pipeline(
+        colorhunt=args.colorhunt,
+        etsy=args.etsy,
+        ebay_seller_hub=args.ebay_seller_hub,
+        ebay_browse=args.ebay_browse
+    )
+
 if __name__ == "__main__":
-    etl_pipeline(colorhunt=False, etsy=False, ebay_seller_hub=False, ebay_browse=False)
+    main()

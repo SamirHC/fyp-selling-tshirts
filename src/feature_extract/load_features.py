@@ -1,3 +1,4 @@
+import argparse
 import sqlite3
 
 from src.common import utils, config
@@ -90,10 +91,25 @@ def load_features(n=-1):
 
         conn.commit()
 
-
     conn.close()
 
 
+def main():
+    parser = argparse.ArgumentParser(description="Feature extraction")
+    parser.add_argument("--clear", action="store_true", help="Clear extracted features")
+    parser.add_argument("--load", action="store_true", help="Load features")
+    parser.add_argument("--n", type=int, default=-1, help="Limit number of items to load")
+
+    args = parser.parse_args()
+
+    print("Yee")
+    if args.clear:
+        print("Clearing feature table data")
+        clear_features()
+    if args.load:
+        print("Loading features")
+        load_features(n=args.n)
+
+
 if __name__ == "__main__":
-    # clear_features()
-    load_features()
+    main()
