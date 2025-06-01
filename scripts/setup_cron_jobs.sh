@@ -7,8 +7,8 @@ VENV_PATH="$BASE_DIR/venv/bin/activate"
 ETL_SCRIPT="$BASE_DIR/scripts/run_etl.sh"
 FEATURE_SCRIPT="$BASE_DIR/scripts/run_feature_extraction.sh"
 
-ETL_SCHEDULE="53 * * * *"      # Every hour, 0th minute
-FEATURE_SCHEDULE="54 * * * *"  # Every hour, 0th minute
+ETL_SCHEDULE="0 * * * *"      # Every hour, 0th minute
+FEATURE_SCHEDULE="0 * * * *"  # Every hour, 0th minute
 
 {
     echo "$ETL_SCHEDULE $ETL_SCRIPT"
