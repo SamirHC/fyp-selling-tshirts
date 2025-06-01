@@ -79,10 +79,10 @@ def load_features(n=-1):
         cursor.executemany(query, ((key[0], key[1], colour) for colour in colours))
 
         query = """
-            INSERT OR IGNORE INTO print_design_nearest_palette (source, design_id, palette_id)
-            VALUES (?, ?, ?)
+            INSERT OR IGNORE INTO print_design_nearest_palette (source, design_id, palette_id, distance)
+            VALUES (?, ?, ?, ?)
         """
-        cursor.execute(query, (key[0], key[1], palette_data["row_idx"]))
+        cursor.execute(query, (key[0], key[1], palette_data["row_idx"], palette_data["dist"]))
 
         # TODO: 
         #  - Resnet Image Classification or title NLP: get nouns and include in tags
