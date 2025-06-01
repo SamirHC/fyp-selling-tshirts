@@ -16,13 +16,29 @@ def find_clothes_to_feature_extract(cursor: sqlite3.Cursor) -> list:
     return cursor.execute(query).fetchall()
 
 
+def clear_features() -> list:
+    conn = sqlite3.connect(config.DB_PATH)
+    cursor = conn.cursor()
+
+    query = """ 
+        DELETE FROM print_design_nearest_palette;
+        DELETE FROM print_design_palettes;
+        DELETE FROM print_design_regions;
+        DELETE FROM print_design_tags;
+    """
+    cursor.executescript(query)
+
+    conn.commit()
+    conn.close()
+
+
 def get_clothes_img_url(cursor: sqlite3.Cursor, clothes_key: tuple[str, str]) -> str:
     query = "SELECT image_url FROM clothes WHERE source=? AND item_id=?"
     return cursor.execute(query, clothes_key).fetchone()
 
 
 def load_features(n=-1):
-    segmentation_model = segmentation.ContourSegmentation()
+    segmentation_model = segmentation.SegformerB3ClothesSegmentation()
 
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
@@ -79,4 +95,5 @@ def load_features(n=-1):
 
 
 if __name__ == "__main__":
+    clear_features()
     load_features()
