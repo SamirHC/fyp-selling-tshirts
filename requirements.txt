@@ -22,3 +22,4 @@ selenium
 cairosvg
 openai
 torchvision
+pyciede2000

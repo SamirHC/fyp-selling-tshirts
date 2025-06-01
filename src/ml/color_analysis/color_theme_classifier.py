@@ -4,11 +4,13 @@ import cv2
 import numpy as np
 import pandas as pd
 from PIL import Image
+import pyciede2000
 from scipy import optimize
 import skimage
 from sklearn.cluster import KMeans
 
 from src.data_collection import palettes
+
 
 @lru_cache(maxsize=1)
 def get_color_df():
@@ -198,7 +200,7 @@ class CIELabColorThemeClassifier:
         cost_matrix = np.zeros((4, 4))
         for i in range(4):
             for j in range(4):
-                cost_matrix[i, j] = np.linalg.norm(p[i, :] - q[j, :])
+                cost_matrix[i, j] = pyciede2000.ciede2000(p[i], q[j])["delta_E_00"]
 
         row_ind, col_ind = optimize.linear_sum_assignment(cost_matrix)
         flow = np.zeros((4, 4))
