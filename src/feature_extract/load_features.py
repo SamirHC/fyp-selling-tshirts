@@ -95,5 +95,5 @@ def load_features(n=-1):
 
 
 if __name__ == "__main__":
-    clear_features()
+    # clear_features()
     load_features()
