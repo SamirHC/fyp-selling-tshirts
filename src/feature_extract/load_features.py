@@ -85,10 +85,6 @@ def load_features(n=-1):
         """
         cursor.execute(query, (key[0], key[1], palette_data["row_idx"], palette_data["dist"]))
 
-        # TODO: 
-        #  - Resnet Image Classification or title NLP: get nouns and include in tags
-        #  - Classify design as text, image, both or neither
-
         conn.commit()
 
     conn.close()
@@ -102,7 +98,6 @@ def main():
 
     args = parser.parse_args()
 
-    print("Yee")
     if args.clear:
         print("Clearing feature table data")
         clear_features()

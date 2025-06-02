@@ -71,7 +71,7 @@ class EntropySegmentation(TshirtDesignSegmentationModel):
 class ContourSegmentation(TshirtDesignSegmentationModel):
     def extract_design_bbox(self, image: Image.Image):
         SIZE = 32
-        CENTRALITY = 0.6
+        CENTRALITY = 0.8
         MIN_X, MAX_X = SIZE*(1-CENTRALITY)/2, SIZE*(1+CENTRALITY)/2
         MIN_Y, MAX_Y = SIZE*(1-CENTRALITY)/2, SIZE*(1+CENTRALITY)/2
         MIN_W, MIN_H = 5, 5
@@ -82,7 +82,6 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
 
         grey = np.array(resized_image.convert("L"))
         edges = cv2.Canny(grey, threshold1=50, threshold2=150)
-        #Image.fromarray(edges).show()
 
         contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
@@ -101,20 +100,18 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
             if not (MIN_Y < (y+h)/2 < MAX_Y):
                 break
 
-            #print(rect)
             rects.append(rect)
             densities.append(np.sum(edges[x:x+w, y:y+h])/(w*h))
 
         if len(densities) > 1:
             delta_density = np.array([d2/d1 for d1, d2 in zip(densities, densities[1:])])
-            #print(delta_density)
             x, y, w, h = rects[np.argmax(delta_density)+1]
         else:
             x, y, w, h = rects[0]
-        x = int(max(0, (x-1)*resize_x))
-        y = int(max(0, (y-1)*resize_y))
-        w = int((w+2)*resize_x)
-        h = int((h+2)*resize_y)
+        x = int(max(0, x*resize_x))
+        y = int(max(0, y*resize_y))
+        w = int(w*resize_x)
+        h = int(h*resize_y)
 
         return (x, y, x+w, y+h)
 
