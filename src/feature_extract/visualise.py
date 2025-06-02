@@ -11,6 +11,9 @@ from src.data_collection import palettes
 from src.ml.color_analysis.color_theme_classifier import CIELabColorThemeClassifier
 
 
+moving_median_df = palettes.get_log_likes_moving_median(palettes.get_palette_data_db())
+
+
 def get_visualisable_clothes_keys(cursor: sqlite3.Cursor) -> list:
     query = """
         SELECT source, item_id FROM clothes
@@ -94,9 +97,13 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
     title = f"Title: \n{textwrap.fill(title, width=30)} \n"
     tags = tags.split(",")
     tag_info = f"Assigned Tags: {"\n".join(tags)} \n"
+    median = moving_median_df.loc[moving_median_df["x"]==palette_id, "log_y_smooth"].item()
+    adjusted_popularity_score = f"Adjusted Popularity Score: {np.log(likes)/median}"
     likes = f"Likes: {likes} \n"
     palette_distance = f"Palette Distance: {palette_distance}\n"
-    text_data = "\n".join((title, tag_info, likes, palette_distance))
+    text_data = "\n".join(
+        (title, tag_info, likes, adjusted_popularity_score, palette_distance)
+    )
 
     # Create visualisation
     _, axs = plt.subplots(1, 4)
