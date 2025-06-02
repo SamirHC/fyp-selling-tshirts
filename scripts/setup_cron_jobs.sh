@@ -3,7 +3,6 @@
 set -e
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VENV_PATH="$BASE_DIR/venv/bin/activate"
 ETL_SCRIPT="$BASE_DIR/scripts/run_etl.sh"
 FEATURE_SCRIPT="$BASE_DIR/scripts/run_feature_extraction.sh"
 
