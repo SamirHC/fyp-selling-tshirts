@@ -1,3 +1,5 @@
+import time
+
 import numpy as np
 from PIL import ImageDraw
 import torch
@@ -96,18 +98,22 @@ def conduct_evaluation(image_df_path, show=False):
     ]
     iou_scores = [[] for _ in seg_models]
     miou_scores = [[] for _ in seg_models]
+    times = [[] for _ in seg_models]
 
     for i, row in tshirt_df.iterrows():
         print(i)
         url = row["img_url"]
         image = utils.get_image_from_url(url).convert("RGBA")
 
-        for j, model in enumerate(seg_models):
+        for j, model in enumerate(seg_models):            
             x,y,w,h = actual_bbox = tuple(row[["x","y","w","h"]])
             if actual_bbox == (0,0,0,0):
                 continue
             xr,yr,wr,hr = relaxed_bbox = tuple(row[["xr","yr","wr","hr"]])
+
+            start_time = time.perf_counter()
             xe1,ye1,xe2,ye2 = extracted_bbox = model.extract_design_bbox(image)  # (x1,y1,x2,y2) form
+            end_time = time.perf_counter()
 
             if show:
                 draw = ImageDraw.Draw(image.copy())
@@ -125,14 +131,25 @@ def conduct_evaluation(image_df_path, show=False):
             miou_score = modified_iou((xe1, ye1, xe2-xe1, ye2-ye1), actual_bbox, relaxed_bbox)
             miou_scores[j].append(miou_score)
 
-    for model, miou_data, iou_data in zip(seg_models, miou_scores, iou_scores):
+            duration = end_time - start_time
+            times[j].append(duration)
+
+    for model, miou_data, iou_data, time_data in zip(seg_models, miou_scores, iou_scores, times):
+        print("-"*80)
         print(model.__class__.__name__)
         print(f"IoU scores:")
         print(iou_data)
+        print()
         print(f"MIoU scores:")
         print(miou_data)
+        print()
+        print("Times:")
+        print(time_data)
+        print()
         print(f"Mean IoU score: {np.mean(iou_data)}")
         print(f"Mean MIoU score: {np.mean(miou_data)}")
+        print(f"Mean execution time: {np.mean(time_data)}")
+        print("-"*80)
 
 
 if __name__ == "__main__":
