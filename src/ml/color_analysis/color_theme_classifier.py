@@ -283,3 +283,7 @@ class CIELabColorThemeClassifier:
             "color_tags": row["color_tags"],
             "other_tags": row["other_tags"],
         })
+
+
+if __name__ == "__main__":
+    print(get_color_df())
