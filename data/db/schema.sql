@@ -22,8 +22,8 @@ CREATE TABLE IF NOT EXISTS "palette_tag_associations" (
   "palette_id" INTEGER,
   "tag" TEXT,
   PRIMARY KEY ("palette_id", "tag")
-  FOREIGN KEY ("tag") REFERENCES "palette_tags" ("name")
-  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
+  FOREIGN KEY ("tag") REFERENCES "palette_tags" ("name") ON DELETE CASCADE
+  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id") ON DELETE CASCADE
 );
 
 --DROP TABLE IF EXISTS "palette_colours";
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS "palette_colours" (
   "palette_id" INTEGER,
   "colour" CHAR(7),
   PRIMARY KEY ("palette_id", "colour")
-  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
+  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id") ON DELETE CASCADE
 );
 
 --DROP TABLE IF EXISTS "clothes";
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS "clothes" (
   "source" TEXT,
   "item_id" TEXT,
   "title" TEXT,
-  "image_url" TEXT,
+  "image_url" TEXT UNIQUE,
   PRIMARY KEY ("source", "item_id")
 );
 
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS "print_design_palettes" (
   "item_id" TEXT,
   "colour" CHAR(7),
   PRIMARY KEY ("source", "item_id", "colour")
-  FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
+  FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source") ON DELETE CASCADE
 );
 
 --DROP TABLE IF EXISTS "print_design_regions";
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS "print_design_regions" (
   "width" INTEGER,
   "height" INTEGER,
   PRIMARY KEY ("source", "item_id", "algorithm")
-  FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source")
+  FOREIGN KEY ("item_id", "source") REFERENCES "clothes" ("item_id", "source") ON DELETE CASCADE
 );
 
 --DROP TABLE IF EXISTS "print_design_tags";
@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS "print_design_tags" (
   "design_id" TEXT,
   "tag" TEXT,
   PRIMARY KEY ("source", "design_id", "tag")
-  FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
+  FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source") ON DELETE CASCADE
 );
 
 --DROP TABLE IF EXISTS "print_design_nearest_palette";
@@ -87,8 +87,8 @@ CREATE TABLE IF NOT EXISTS "print_design_nearest_palette" (
   "palette_id" INTEGER,
   "distance" FLOAT,
   PRIMARY KEY ("source", "design_id")
-  FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source")
-  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id")
+  FOREIGN KEY ("design_id", "source") REFERENCES "clothes" ("item_id", "source") ON DELETE CASCADE
+  FOREIGN KEY ("palette_id") REFERENCES "palettes" ("id") ON DELETE CASCADE
 );
 
 --DROP TABLE IF EXISTS "fonts";
