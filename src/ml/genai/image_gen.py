@@ -3,8 +3,6 @@ import base64
 from datetime import datetime
 import os
 
-from diffusers import StableDiffusionPipeline, StableDiffusionInpaintPipeline
-from huggingface_hub import login
 from openai import OpenAI
 from PIL import Image
 import torch
@@ -12,7 +10,10 @@ import torch
 from src.common import utils, config
 
 
-login(config.HUGGING_FACE_TOKEN)
+if config.GPU:
+    from diffusers import StableDiffusionPipeline, StableDiffusionInpaintPipeline
+    from huggingface_hub import login
+    login(config.HUGGING_FACE_TOKEN)
 
 
 class ImageModel(ABC):

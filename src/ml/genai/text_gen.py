@@ -6,8 +6,6 @@ from src.data_collection import slogans
 from src.common import config
 
 
-# TODO: Flesh out LLMs for text design generation and prompt generation.
-
 class TextModel(ABC):
     def generate_text(self) -> str:
         return ""

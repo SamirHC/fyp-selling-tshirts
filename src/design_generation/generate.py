@@ -1,7 +1,8 @@
 from src.common import constants
-from src.data_collection import fonts, palettes
+from src.data_collection import palettes
 from src.design_generation import internal_repr as ir
 from src.design_generation.template import TopBottomTextWithCenterImage
+from src.design_generation import font_select
 from src.ml.genai import image_gen, text_gen
 
 
@@ -61,11 +62,13 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
         prompt=prompt
     ).resize((256, 256))
 
+    # Font Selection
+    font = font_select.select_font(prompt, image)
+
     # Get a batch of prompts and images, and compute fitness
     # Fitness: minimises colour palette distance
     #          minimises mask occurence when using segformerb3 model
     #          scores highly 
-
     # TODO:
     #  - Create slogan and split
     #  - Choose font based on tags
@@ -73,7 +76,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     design = TopBottomTextWithCenterImage(
         canvas_size=(512, 512),
         image=image,
-        font=fonts.get_random_fonts().iloc[0]["family"],
+        font=font,
         font_size=72,
         color=(constants.Color.BLACK if not colours else palettes.hex_to_rgb(colours[0])),
         top_text="Good",
