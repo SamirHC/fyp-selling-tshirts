@@ -12,7 +12,7 @@ def find_clothes_to_feature_extract(cursor: sqlite3.Cursor) -> list:
         SELECT source, item_id FROM clothes
         WHERE NOT EXISTS (
             SELECT 1 FROM print_design_regions AS p
-            WHERE clothes.source=p.source AND clothes.item_id=p.item_id
+            WHERE clothes.source=p.source AND clothes.item_id=p.item_id AND p.algorithm NOT IN ('InnerGroundTruth', 'OuterGroundTruth')
         )"""
     return cursor.execute(query).fetchall()
 
@@ -24,7 +24,7 @@ def clear_features() -> list:
     query = """ 
         DELETE FROM print_design_nearest_palette;
         DELETE FROM print_design_palettes;
-        DELETE FROM print_design_regions;
+        DELETE FROM print_design_regions WHERE algorithm NOT IN ('InnerGroundTruth', 'OuterGroundTruth');
         DELETE FROM print_design_tags;
     """
     cursor.executescript(query)
