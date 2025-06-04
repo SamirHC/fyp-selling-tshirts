@@ -53,7 +53,12 @@ class EntropySegmentation(TshirtDesignSegmentationModel):
             val = len(inner)*self.entropy(inner) + len(outer)*self.entropy(outer)
             if val < optimum:
                 optimum = val
-                best = x1 * resize_x, y1 * resize_y, x2 * resize_x, y2 * resize_y
+                best = (
+                    int(x1 * resize_x),
+                    int(y1 * resize_y),
+                    int(x2 * resize_x),
+                    int(y2 * resize_y),
+                )
             
             #print(f"Best: {best}, Opt: {optimum}, {x1,x2,y1,y2}")
         
@@ -134,8 +139,8 @@ class ProceduralSegmentation(TshirtDesignSegmentationModel):
         #print(row_indices)
         col_indices = np.where(np.sum(opaque, axis=0) > 26)[0]
         try:
-            y1, y2 = np.min(row_indices) * resize_y, np.max(row_indices) * resize_y
-            x1, x2 = np.min(col_indices) * resize_x, np.max(col_indices) * resize_x
+            y1, y2 = int(np.min(row_indices) * resize_y), int(np.max(row_indices) * resize_y)
+            x1, x2 = int(np.min(col_indices) * resize_x), int(np.max(col_indices) * resize_x)
             return (x1, y1, x2, y2)
         except:
             return super().extract_design_bbox(image)
@@ -164,7 +169,7 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
             y1 += h // 8
             y2 -= h // 10
             assert x1 < x2 and y1 < y2
-            return (x1, y1, x2, y2)
+            return (int(x1), int(y1), int(x2), int(y2))
         else:
             return super().extract_design_bbox(image)
 

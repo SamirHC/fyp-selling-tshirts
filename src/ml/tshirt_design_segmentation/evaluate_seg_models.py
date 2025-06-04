@@ -1,5 +1,7 @@
 import time
 
+import pandas as pd
+import matplotlib.pyplot as plt
 import numpy as np
 from PIL import ImageDraw
 import torch
@@ -20,10 +22,10 @@ def rect_intersect(rect1: tuple, rect2: tuple) -> tuple:
     x1, y1, w1, h1 = rect1
     x2, y2, w2, h2 = rect2
 
-    xi = max(x1, x2)
-    yi = max(y1, y2)
-    wi = min(x1 + w1, x2 + w2) - xi
-    hi = min(y1 + h1, y2 + h2) - yi
+    xi = int(max(x1, x2))
+    yi = int(max(y1, y2))
+    wi = int(min(x1 + w1, x2 + w2) - xi)
+    hi = int(min(y1 + h1, y2 + h2) - yi)
 
     if wi < 0 or hi < 0:
         wi = hi = 0
@@ -50,8 +52,14 @@ def modified_iou(rect1, rect2_inner, rect2_outer) -> float:
     returns |A intersect B|/|(A-(A intersect C)) union B| for B <= C
     """
     print("Inside miou", rect1, rect2_inner, rect2_outer)
-    assert rect_intersect(rect2_inner, rect2_outer) == rect2_inner
-    return rect_area(rect_intersect(rect1, rect2_inner)) / (rect_area(rect1) - rect_area(rect_intersect(rect1, rect2_outer)) + rect_area(rect2_inner))
+    in_intersect_out = rect_intersect(rect2_inner, rect2_outer)
+    if in_intersect_out != rect2_inner:
+        print("Found label violating B <= C! Shrinking B to B intersect C.")
+    return (
+        rect_area(rect_intersect(rect1, in_intersect_out)) 
+        / (rect_area(rect1) - rect_area(rect_intersect(rect1, rect2_outer)) 
+            + rect_area(in_intersect_out))
+    )
 
 
 def label():
@@ -86,9 +94,7 @@ def label():
     utils.save_data(tshirt_df, image_df_path)
 
 
-def conduct_evaluation(image_df_path, show=False):
-    tshirt_df = utils.load_data(image_df_path)
-
+def conduct_evaluation(df: pd.DataFrame, show=False):
     seg_models: list[TshirtDesignSegmentationModel] = [
         NoSegmentation(),
         ContourSegmentation(),
@@ -100,16 +106,14 @@ def conduct_evaluation(image_df_path, show=False):
     miou_scores = [[] for _ in seg_models]
     times = [[] for _ in seg_models]
 
-    for i, row in tshirt_df.iterrows():
+    for i, row in df.iterrows():
         print(i)
-        url = row["img_url"]
+        url = row["image_url"]
         image = utils.get_image_from_url(url).convert("RGBA")
 
-        for j, model in enumerate(seg_models):            
-            x,y,w,h = actual_bbox = tuple(row[["x","y","w","h"]])
-            if actual_bbox == (0,0,0,0):
-                continue
-            xr,yr,wr,hr = relaxed_bbox = tuple(row[["xr","yr","wr","hr"]])
+        for j, model in enumerate(seg_models):
+            x,y,w,h = actual_bbox = tuple(row[["left_in","top_in","width_in","height_in"]])
+            xr,yr,wr,hr = relaxed_bbox = tuple(row[["left_out","top_out","width_out","height_out"]])
 
             start_time = time.perf_counter()
             xe1,ye1,xe2,ye2 = extracted_bbox = model.extract_design_bbox(image)  # (x1,y1,x2,y2) form
@@ -150,16 +154,38 @@ def conduct_evaluation(image_df_path, show=False):
         print(f"Mean MIoU score: {np.mean(miou_data)}")
         print(f"Mean execution time: {np.mean(time_data)}")
         print("-"*80)
+        if False:
+            plt.hist(miou_data, bins=8, density=True)
+            plt.xlabel("MIoU")
+            plt.ylabel("Frequency Density")
+            plt.title(model.__class__.__name__)
+            plt.show()
 
 
 if __name__ == "__main__":
-    import os
+    import sqlite3
+    from src.common import config
 
-    image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs", "labelled_image_bboxs.pickle")
-    tshirt_df = utils.load_data(image_df_path)
-    #print(tshirt_df)
-    #for i, row in tshirt_df.iterrows():
-    #    print(i+1, row["img_url"])
+    conn = sqlite3.connect(config.DB_PATH)
+    cursor = conn.cursor()
 
-    #label()
-    conduct_evaluation(image_df_path)
+    query = """
+        SELECT clothes.source, clothes.item_id, clothes.image_url,
+            pdr_in.left AS left_in, pdr_in.top AS top_in,
+            pdr_in.width AS width_in, pdr_in.height AS height_in,
+            pdr_out.left AS left_out, pdr_out.top AS top_out,
+            pdr_out.width AS width_out, pdr_out.height AS height_out
+        FROM clothes
+            JOIN print_design_regions AS pdr_in
+            ON clothes.source = pdr_in.source AND clothes.item_id = pdr_in.item_id
+            JOIN print_design_regions AS pdr_out
+            ON clothes.source = pdr_out.source AND clothes.item_id = pdr_out.item_id
+        WHERE pdr_in.algorithm = 'InnerGroundTruth' AND pdr_out.algorithm = 'OuterGroundTruth'
+    """
+    result = cursor.execute(query)
+    rows = result.fetchall()
+    columns = [d[0] for d in result.description]
+    df = pd.DataFrame(rows, columns=columns)
+    print(df)
+
+    conduct_evaluation(df)
