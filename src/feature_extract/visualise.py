@@ -36,6 +36,8 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
         SELECT
             c.title, c.image_url,
             pdr.left, pdr.top, pdr.width, pdr.height,
+            pdr_inner_gt.left, pdr_inner_gt.top, pdr_inner_gt.width, pdr_inner_gt.height,
+            pdr_outer_gt.left, pdr_outer_gt.top, pdr_outer_gt.width, pdr_outer_gt.height,
             (
                 SELECT GROUP_CONCAT(colour)
                 FROM print_design_palettes AS pdp
@@ -49,14 +51,22 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
             ) AS tags
         FROM clothes AS c
         JOIN print_design_regions AS pdr
-            ON c.source = pdr.source AND c.item_id = pdr.item_id
+            ON c.source = pdr.source AND c.item_id = pdr.item_id AND pdr.algorithm = 'SegformerB3ClothesSegmentation'
+        LEFT JOIN print_design_regions AS pdr_inner_gt
+            ON c.source = pdr_inner_gt.source AND c.item_id = pdr_inner_gt.item_id AND pdr_inner_gt.algorithm = 'InnerGroundTruth'
+        LEFT JOIN print_design_regions AS pdr_outer_gt
+            ON c.source = pdr_outer_gt.source AND c.item_id = pdr_outer_gt.item_id AND pdr_outer_gt.algorithm = 'OuterGroundTruth'
         JOIN print_design_nearest_palette AS pdnp
             ON c.source = pdnp.source AND c.item_id = pdnp.design_id
         WHERE c.source = ? AND c.item_id = ?
         GROUP BY c.source, c.item_id
     """
-    result = (title, image_url, left, top, width, height,
-     print_design_palette, palette_id, tags
+    result = (
+        title, image_url,
+        left, top, width, height,
+        in_left, in_top, in_width, in_height,
+        out_left, out_top, out_width, out_height,
+        print_design_palette, palette_id, tags
     ) = cursor.execute(query, key).fetchone()
     print(result)
 
@@ -74,11 +84,20 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
     ) = cursor.execute(query, (palette_id,)).fetchone()
     print(result)
 
-    # Draw bbox on image
+    # Draw bboxs on image
     image = utils.get_image_from_url(image_url).convert("RGB")
-    bbox = (left, top, left+width, top+height)
     draw = ImageDraw.ImageDraw(image)
-    draw.rectangle(bbox, outline=constants.Color.GREEN, width=3)
+
+    bbox = (left, top, left+width, top+height)
+    draw.rectangle(bbox, outline=constants.Color.RED, width=3)  # Predicted
+
+    if all((in_left, in_top, in_width, in_height)):  # Inner GT
+        in_bbox = (in_left, in_top, in_left+in_width, in_top+in_height)
+        draw.rectangle(in_bbox, outline=constants.Color.GREEN, width=3)
+    
+    if all((out_left, out_top, out_width, out_height)):  # Outer GT
+        out_bbox = (out_left, out_top, out_left+out_width, out_top+out_height)
+        draw.rectangle(out_bbox, outline=constants.Color.CYAN, width=3)
 
     # Format palettes
     print_design_palette = np.array(
