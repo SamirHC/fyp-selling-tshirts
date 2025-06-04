@@ -9,8 +9,8 @@ from torchvision.ops import box_iou
 
 from src.ml.tshirt_design_segmentation.segmentation import (
     NoSegmentation,
+    FixedSegmentation,
     ContourSegmentation,
-    ProceduralSegmentation,
     EntropySegmentation,
     SegformerB3ClothesSegmentation,
     TshirtDesignSegmentationModel
@@ -97,10 +97,10 @@ def label():
 def conduct_evaluation(df: pd.DataFrame, show=False):
     seg_models: list[TshirtDesignSegmentationModel] = [
         NoSegmentation(),
+        FixedSegmentation(),
         ContourSegmentation(),
-        ProceduralSegmentation(),
         EntropySegmentation(),
-        SegformerB3ClothesSegmentation()
+        SegformerB3ClothesSegmentation(),
     ]
     iou_scores = [[] for _ in seg_models]
     miou_scores = [[] for _ in seg_models]

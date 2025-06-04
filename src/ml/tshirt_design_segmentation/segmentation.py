@@ -22,6 +22,21 @@ class NoSegmentation(TshirtDesignSegmentationModel):
     pass
 
 
+class FixedSegmentation(TshirtDesignSegmentationModel):
+    def __init__(self, x=1/4, y=1/4, w=1/2, h=1/2):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
+    
+    def extract_design_bbox(self, image):
+        x = image.width * self.x
+        y = image.height * self.y
+        w = x + image.width * self.w
+        h = y + image.height * self.h
+        return (x, y, x+w, y+h)
+
+
 class EntropySegmentation(TshirtDesignSegmentationModel):
     def __init__(self, size=64, stride=4):
         assert isinstance(size, int)
@@ -135,31 +150,6 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
         return (x, y, x+w, y+h)
 
 
-class ProceduralSegmentation(TshirtDesignSegmentationModel):
-    def extract_design_bbox(self, image: Image.Image):
-        size = 64
-        resize_x = image.width / size
-        resize_y = image.height / size
-        res = image.resize((size, size))
-        edges = image.filter(ImageFilter.FIND_EDGES).convert("1")
-        edges = edges.filter(ImageFilter.MedianFilter)
-        #edges.show()
-        #print(np.array(edges))
-        #res.show()
-        arr = np.array(res)
-        opaque = arr[:, :, 3] >= 200
-
-        row_indices = np.where(np.sum(opaque, axis=1) > 32)[0]
-        #print(row_indices)
-        col_indices = np.where(np.sum(opaque, axis=0) > 26)[0]
-        try:
-            y1, y2 = int(np.min(row_indices) * resize_y), int(np.max(row_indices) * resize_y)
-            x1, x2 = int(np.min(col_indices) * resize_x), int(np.max(col_indices) * resize_x)
-            return (x1, y1, x2, y2)
-        except:
-            return super().extract_design_bbox(image)
-
-
 class UNetSegmentation(TshirtDesignSegmentationModel):
     def __init__(self):
         model_path = os.path.join("data", "models", "TshirtPrintImageSegmentationModel1.pt")
@@ -188,55 +178,6 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
             y2 -= h // 10
             assert x1 < x2 and y1 < y2
             return (int(x1), int(y1), int(x2), int(y2))
-        else:
-            return super().extract_design_bbox(image)
-
-
-class LLMSegmentation(TshirtDesignSegmentationModel):
-    def __init__(self):
-        self.model = DeepSeekLLM()
-    def extract_design_bbox(self, image: Image.Image):
-        SIZE = 16
-
-        resize_x = image.width / SIZE
-        resize_y = image.height / SIZE
-        resized_image = image.resize((SIZE, SIZE))
-
-        grey = np.array(resized_image.convert("L"))
-        edges = cv2.Canny(grey, threshold1=50, threshold2=150)
-        edge_string = "\n".join("".join(str(int(item == 255)) for item in row) for row in edges)
-        print(edge_string)
-        
-        completion = self.model.client.chat.completions.create(
-            model="deepseek/deepseek-r1:free",
-            messages=[
-                {"role": "system",
-                 "content": "ONLY RESPOND WITH A PYTHON TUPLE IN THE FORMAT (x, y, width, height). NO EXPLANATIONS OR EXTRA TEXT."},
-                {"role": "user",
-                "content": f"Given the Tshirt edge binary mask, return the bounding box of the Tshirt, excluding the sleeves:\n{edge_string}."}
-            ],
-        )
-        print(completion)
-        result = str(completion.choices[0].message.content)
-        print(result)
-        success = True
-        try:
-            stripped = result.strip("() ")
-            if not stripped:
-                success = False            
-            result = tuple(int(num.strip()) for num in stripped.split(","))
-            success = len(result) == 4
-        except:
-            success = False
-
-        if success:
-            x, y, w, h = result
-            x *= resize_x
-            y *= resize_y
-            w *= resize_x
-            h *= resize_y
-
-            return (x, y, w, h)
         else:
             return super().extract_design_bbox(image)
 
