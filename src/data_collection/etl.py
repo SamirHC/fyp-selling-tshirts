@@ -1,4 +1,5 @@
 import argparse
+import random
 import os
 
 import pandas as pd
@@ -49,7 +50,32 @@ def extract_data(**flags):
     
     if flags["ebay_browse"]:
         access_token = ebay_browse.get_access_token()
-        queries = ["funny graphic tee", "inspirational tshirt"]
+        queries= [{
+            "q": "graphic tshirt",
+            "limit": 50,
+            "offset": 50*random.randint(0, 20),
+            "filter": (
+                "sellers:{tshirtsinc},"
+                "buyingOptions:{FIXED_PRICE},"
+                "conditions:{NEW},"
+                "price:[10..50],"
+                "priceCurrency:USD,"
+                "sellerAccountTypes:{BUSINESS}"
+            )
+        },
+        {
+            "q": "graphic tshirt",
+            "limit": 50,
+            "offset": 50*random.randint(0, 20),
+            "filter": (
+                "buyingOptions:{FIXED_PRICE},"
+                "conditions:{NEW},"
+                "price:[10..50],"
+                "priceCurrency:GBP,"
+                "sellerAccountTypes:{BUSINESS}"
+            )
+        }
+        ]
         ebay_browse_df = pd.concat(
             ebay_browse.get_items_as_dataframe(access_token, query)
             for query in queries

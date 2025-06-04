@@ -27,15 +27,11 @@ def get_access_token():
     return response.json()["access_token"]
 
 
-def search_items(access_token, query, limit=5):
+def search_items(access_token, params):
     url = "https://api.ebay.com/buy/browse/v1/item_summary/search"
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
-    }
-    params = {
-        "q": query,
-        "limit": limit
     }
     response = requests.get(url, headers=headers, params=params)
     response.raise_for_status()
@@ -53,9 +49,11 @@ def get_item_details_by_id(access_token, item_id):
     return response.json()
 
 
-def get_items_as_dataframe(access_token, query, limit=10) -> pd.DataFrame:
+def get_items_as_dataframe(access_token, params) -> pd.DataFrame:
     try:
-        result = search_items(access_token, query, limit)
+        result = search_items(access_token, params)
+        if result["total"] == 0:
+            raise ValueError(f"Search query yields no results: {params}")
     except Exception as e:
         print(f"Error in get_items_as_dataframe: {e}. Returning empty df")
         return pd.DataFrame(columns=["item_id", "title", "img_url"])
@@ -68,18 +66,32 @@ def get_items_as_dataframe(access_token, query, limit=10) -> pd.DataFrame:
     return df
 
 
-if __name__ == "__main__":
-    access_token = get_access_token()
-    df = get_items_as_dataframe(access_token, "inspirational graphic tee", limit=3)
+def main(access_token):
+    params = {
+        "q": "graphic tshirt",
+        "limit": 3,
+        "filter": "sellers:{tshirtsinc},buyingOptions:{FIXED_PRICE},conditions:{NEW},price:[10..50],priceCurrency:USD,sellerAccountTypes:{BUSINESS}"
+    }
+    df = get_items_as_dataframe(access_token, params)
     print(df)
     print(df.iloc[0]["img_url"])
+    # "sellers:{tshirtsinc}"
 
-    """
-    result = search_items(access_token, "graphic tee", limit=10)
+
+def main2(access_token):
+    params = {
+        "q": "graphic tshirt",
+        "limit": 1,
+        "filter": "buyingOptions:{FIXED_PRICE},conditions:{NEW},price:[10..50],priceCurrency:USD,sellerAccountTypes:{BUSINESS}"
+    }
+    result = search_items(access_token, params)
     print(result.keys())
 
     item_summaries = result["itemSummaries"]
     print(item_summaries[0].keys())
+    print()
+    print(item_summaries)
+    print()
 
     for item in item_summaries:
         print(item["itemId"])
@@ -92,9 +104,11 @@ if __name__ == "__main__":
         print(item_details["price"])
         print(item_details["categoryPath"])
         print(item_details["image"])
-        print(item_details["color"])
-        print(item_details["pattern"])
         print(item_details["itemWebUrl"])
 
         print()
-        """
+
+
+if __name__ == "__main__":
+    access_token = get_access_token()
+    main(access_token)
