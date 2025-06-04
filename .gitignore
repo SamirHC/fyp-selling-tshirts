@@ -5,3 +5,4 @@ venv/
 out/
 html/
 fonts/
+test_data/
