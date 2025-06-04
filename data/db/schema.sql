@@ -104,7 +104,7 @@ CREATE TABLE IF NOT EXISTS "fonts" (
 );
 
 -- Evaluation purposes
-DROP TABLE IF EXISTS "evaluate_palette_tag_matching";
+--DROP TABLE IF EXISTS "evaluate_palette_tag_matching";
 
 CREATE TABLE IF NOT EXISTS "evaluate_palette_tag_matching" (
 	"source"	TEXT,
