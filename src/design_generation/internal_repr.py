@@ -41,8 +41,8 @@ class ImageComponent(Node):
     def to_lxml(self):
         return etree.Element(
             "image",
-            x=str(self.position[0]),
-            y=str(self.position[1]),
+            x=str(int(self.position[0])),
+            y=str(int(self.position[1])),
             href=f"data:image/png;base64,{self.base64_image}"
         )
 
@@ -74,10 +74,10 @@ class TextComponent(Node):
                 svg = etree.Element(
                     "text",
                     attrib={
-                        "x": str(self.position[0]),
-                        "y": str(self.position[1]),
+                        "x": str(int(self.position[0])),
+                        "y": str(int(self.position[1])),
                         "font-family": self.font_family,
-                        "font-size": str(self.font_size),
+                        "font-size": str(int(self.font_size)),
                         "fill": f"rgb{self.fill}",
                         "text-anchor": "middle",
                         "dominant-baseline": "middle",
@@ -120,7 +120,7 @@ class Layer(Node):
     def to_lxml(self):
         svg: etree._Element = etree.Element(
             "g",
-            transform=f"translate{self.position}",
+            transform=f"translate{tuple(int(n) for n in self.position)}",
         )
         svg.extend(component.to_lxml() for component in self.components)
         return svg
@@ -147,8 +147,8 @@ class Design(Node):
     def to_lxml(self):
         svg: etree._Element = etree.Element(
             "svg",
-            width=str(self.canvas_size[0]),
-            height=str(self.canvas_size[1]),
+            width=str(int(self.canvas_size[0])),
+            height=str(int(self.canvas_size[1])),
             xmlns="http://www.w3.org/2000/svg",
         )
         dependencies = self.get_dependencies()
@@ -179,8 +179,8 @@ class Design(Node):
             etree.Element("rect", attrib={
                 "x": "0",
                 "y": "0",
-                "width": str(self.canvas_size[0]),
-                "height": str(self.canvas_size[1]),
+                "width": str(int(self.canvas_size[0])),
+                "height": str(int(self.canvas_size[1])),
                 "fill": "none",
                 "stroke": "black",
                 "stroke-width": "1",
