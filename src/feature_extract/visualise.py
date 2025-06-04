@@ -16,11 +16,8 @@ moving_median_df = palettes.get_log_likes_moving_median(palettes.get_palette_dat
 
 def get_visualisable_clothes_keys(cursor: sqlite3.Cursor) -> list:
     query = """
-        SELECT source, item_id FROM clothes
-        WHERE EXISTS (
-            SELECT 1 FROM print_design_regions AS p
-            WHERE clothes.source=p.source AND clothes.item_id=p.item_id
-        )
+        SELECT source, item_id FROM print_design_regions
+        WHERE algorithm = 'SegformerB3ClothesSegmentation'
         """
     return cursor.execute(query).fetchall()
 
@@ -34,7 +31,7 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
     # Fetch data from db
     query = """
         SELECT
-            c.title, c.image_url,
+            c.source, c.item_id, c.title, c.image_url,
             pdr.left, pdr.top, pdr.width, pdr.height,
             pdr_inner_gt.left, pdr_inner_gt.top, pdr_inner_gt.width, pdr_inner_gt.height,
             pdr_outer_gt.left, pdr_outer_gt.top, pdr_outer_gt.width, pdr_outer_gt.height,
@@ -62,7 +59,7 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
         GROUP BY c.source, c.item_id
     """
     result = (
-        title, image_url,
+        source, item_id, title, image_url,
         left, top, width, height,
         in_left, in_top, in_width, in_height,
         out_left, out_top, out_width, out_height,
@@ -113,15 +110,17 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
     matched_palette = (skimage.color.lab2rgb(matched_palette) * 255).astype(np.uint8)
 
     # Other data
+    source = f"Source: {source}\n"
+    item_id = f"Item ID: {item_id}\n"
     title = f"Title: \n{textwrap.fill(title, width=30)} \n"
     tags = tags.split(",")
-    tag_info = f"Assigned Tags: {"\n".join(tags)} \n"
+    tag_info = f"Assigned Tags:\n{"\n".join(tags)} \n"
     median = moving_median_df.loc[moving_median_df["x"]==palette_id, "log_y_smooth"].item()
     adjusted_popularity_score = f"Adjusted Popularity Score: {np.log(likes)/median}"
     likes = f"Likes: {likes} \n"
     palette_distance = f"Palette Distance: {palette_distance}\n"
     text_data = "\n".join(
-        (title, tag_info, likes, adjusted_popularity_score, palette_distance)
+        (source, item_id, title, tag_info, likes, adjusted_popularity_score, palette_distance)
     )
 
     # Create visualisation
@@ -142,6 +141,22 @@ def visualise_item_results(key: tuple, cursor: sqlite3.Cursor):
     plt.show()
 
 
+def evaluate_palette_tag_matching(key, cursor: sqlite3.Cursor):
+    while True:
+        try:
+            colour_match_count = int(input("Colour match count: "))
+            tag_false_positive = int(input("Tag false positives: "))
+            break
+        except:
+            print("Try again.")
+    plt.close()
+    print("-"*20)
+    cursor.execute("""
+        INSERT OR REPLACE INTO evaluate_palette_tag_matching (source, item_id, colour_match_count, tag_false_positives) 
+        VALUES (?,?,?,?);
+    """, (*key, colour_match_count, tag_false_positive))
+
+
 if __name__ == "__main__":
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
@@ -149,5 +164,7 @@ if __name__ == "__main__":
     keys = get_visualisable_clothes_keys(cursor)
     for key in keys:
         visualise_item_results(key, cursor)
+        #evaluate_palette_tag_matching(key, cursor)
+        #conn.commit()
 
     conn.close()
