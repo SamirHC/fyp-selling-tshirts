@@ -23,9 +23,16 @@ class NoSegmentation(TshirtDesignSegmentationModel):
 
 
 class EntropySegmentation(TshirtDesignSegmentationModel):
+    def __init__(self, size=64, stride=4):
+        assert isinstance(size, int)
+        assert isinstance(stride, int)
+        # Hyperparams
+        self.size = size
+        self.stride = stride
+    
     def extract_design_bbox(self, image: Image.Image):
-        SIZE = 64
-        STRIDE = 4
+        SIZE = self.size
+        STRIDE = self.stride
 
         resize_x = image.width / SIZE
         resize_y = image.height / SIZE
@@ -74,12 +81,19 @@ class EntropySegmentation(TshirtDesignSegmentationModel):
 
 
 class ContourSegmentation(TshirtDesignSegmentationModel):
+    def __init__(self, size=32, centrality=0.8, min_w=1/8, min_h=1/8):
+        # Hyperparams
+        self.size = size
+        self.centrality = centrality
+        self.min_w = min_w
+        self.min_h = min_h
+    
     def extract_design_bbox(self, image: Image.Image):
-        SIZE = 32
-        CENTRALITY = 0.8
+        SIZE = self.size
+        CENTRALITY = self.centrality
         MIN_X, MAX_X = SIZE*(1-CENTRALITY)/2, SIZE*(1+CENTRALITY)/2
         MIN_Y, MAX_Y = SIZE*(1-CENTRALITY)/2, SIZE*(1+CENTRALITY)/2
-        MIN_W, MIN_H = 5, 5
+        MIN_W, MIN_H = int(SIZE*self.min_w), int(SIZE*self.min_h)
 
         resize_x = image.width / SIZE
         resize_y = image.height / SIZE
@@ -152,8 +166,12 @@ class UNetSegmentation(TshirtDesignSegmentationModel):
 
 
 class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
-    def __init__(self):
+    def __init__(self, width_cut=5, top_cut=8, bottom_cut=10):
         self.model = segformer_b3_clothes.SegformerB3Clothes
+        # Hyperparameters
+        self.width_cut = width_cut
+        self.top_cut = top_cut
+        self.bottom_cut = bottom_cut
 
     def extract_design_bbox(self, image: Image.Image):
         mask = self.model.segment_upper_clothes(image)
