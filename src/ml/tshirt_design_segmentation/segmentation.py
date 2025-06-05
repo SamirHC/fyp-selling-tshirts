@@ -126,7 +126,7 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
         grey = np.array(resized_image.convert("L"))
         edges = cv2.Canny(grey, threshold1=50, threshold2=150)
 
-        contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
         contours = map(cv2.boundingRect, contours)
         contours = filter(_valid_contour, contours)
