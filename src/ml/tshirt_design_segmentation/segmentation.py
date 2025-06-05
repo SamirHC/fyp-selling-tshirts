@@ -110,6 +110,15 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
         MIN_Y, MAX_Y = SIZE*(1-CENTRALITY)/2, SIZE*(1+CENTRALITY)/2
         MIN_W, MIN_H = int(SIZE*self.min_w), int(SIZE*self.min_h)
 
+        def _valid_contour(contour) -> bool:
+            x, y, w, h = contour
+            return all((
+                MIN_W < w, 
+                MIN_H < h,
+                MIN_X < x < x + w < MAX_X,
+                MIN_Y < y < y + h < MAX_Y,
+            ))
+
         resize_x = image.width / SIZE
         resize_y = image.height / SIZE
         resized_image = image.resize((SIZE, SIZE))
@@ -119,34 +128,15 @@ class ContourSegmentation(TshirtDesignSegmentationModel):
 
         contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
+        contours = map(cv2.boundingRect, contours)
+        contours = filter(_valid_contour, contours)
 
-        # Find outer most design bbox
-        rect = x, y, w, h = 0, 0, SIZE, SIZE
-        rects = [rect]
-        densities = [np.sum(edges[x:x+w, y:y+h])/(w*h)]
-        for contour in contours:
-            rect = x, y, w, h = cv2.boundingRect(contour)
-
-            if w < MIN_W and h < MIN_H:
-                break
-            if not (MIN_X < (x+w)/2 < MAX_X):
-                break
-            if not (MIN_Y < (y+h)/2 < MAX_Y):
-                break
-
-            rects.append(rect)
-            densities.append(np.sum(edges[x:x+w, y:y+h])/(w*h))
-
-        if len(densities) > 1:
-            delta_density = np.array([d2/d1 for d1, d2 in zip(densities, densities[1:])])
-            x, y, w, h = rects[np.argmax(delta_density)+1]
-        else:
-            x, y, w, h = rects[0]
+        x, y, w, h = next(contours, (0, 0, SIZE, SIZE))
+        
         x = int(max(0, x*resize_x))
         y = int(max(0, y*resize_y))
         w = int(w*resize_x)
         h = int(h*resize_y)
-
         return (x, y, x+w, y+h)
 
 
@@ -185,7 +175,7 @@ class SegformerB3ClothesSegmentation(TshirtDesignSegmentationModel):
 def main():
     from src.common import utils
 
-    seg_model = SegformerB3ClothesSegmentation()
+    seg_model = ContourSegmentation()
     
     image_df_path = os.path.join("data", "dataframes", "seller_hub_data", "ebay_data.pickle")
     tshirt_df = utils.load_data(image_df_path)
