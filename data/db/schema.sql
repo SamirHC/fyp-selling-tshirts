@@ -103,14 +103,15 @@ CREATE TABLE IF NOT EXISTS "fonts" (
   PRIMARY KEY ("filename")
 );
 
--- Evaluation purposes
+-- Evaluation Tables
 --DROP TABLE IF EXISTS "evaluate_palette_tag_matching";
 
 CREATE TABLE IF NOT EXISTS "evaluate_palette_tag_matching" (
 	"source"	TEXT,
 	"item_id"	TEXT,
 	"colour_match_count"	INTEGER,
-  "tag_false_positives" INTEGER,
+  "tag_tp" INTEGER,
+  "tag_fp" INTEGER,
 	PRIMARY KEY("source","item_id"),
 	FOREIGN KEY("source", "item_id") REFERENCES "clothes"("source", "item_id")
 );

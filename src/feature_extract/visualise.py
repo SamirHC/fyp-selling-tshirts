@@ -145,6 +145,7 @@ def evaluate_palette_tag_matching(key, cursor: sqlite3.Cursor):
     while True:
         try:
             colour_match_count = int(input("Colour match count: "))
+            tag_true_positive = int(input("Tag true positives: "))
             tag_false_positive = int(input("Tag false positives: "))
             break
         except:
@@ -152,16 +153,18 @@ def evaluate_palette_tag_matching(key, cursor: sqlite3.Cursor):
     plt.close()
     print("-"*20)
     cursor.execute("""
-        INSERT OR REPLACE INTO evaluate_palette_tag_matching (source, item_id, colour_match_count, tag_false_positives) 
-        VALUES (?,?,?,?);
-    """, (*key, colour_match_count, tag_false_positive))
+        INSERT OR IGNORE INTO evaluate_palette_tag_matching (source, item_id, colour_match_count, tag_tp, tag_fp) 
+        VALUES (?,?,?,?,?);
+    """, (*key, colour_match_count, tag_true_positive, tag_false_positive))
 
 
 if __name__ == "__main__":
+    import random
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
     keys = get_visualisable_clothes_keys(cursor)
+    random.shuffle(keys)
     for key in keys:
         visualise_item_results(key, cursor)
         #evaluate_palette_tag_matching(key, cursor)
