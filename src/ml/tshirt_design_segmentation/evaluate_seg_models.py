@@ -109,7 +109,7 @@ def conduct_evaluation(df: pd.DataFrame, show=False):
     for i, row in df.iterrows():
         print(i)
         url = row["image_url"]
-        image = utils.get_image_from_url(url).convert("RGBA")
+        image = utils.get_image_from_url(url).convert("RGB")
 
         for j, model in enumerate(seg_models):
             x,y,w,h = actual_bbox = tuple(row[["left_in","top_in","width_in","height_in"]])
