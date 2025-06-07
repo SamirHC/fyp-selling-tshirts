@@ -112,7 +112,7 @@ class CenterImage(Template):
         return ir.Design(self.canvas_size, [layer])
 
 
-class TopBottomTextWithCenterImage(Template):
+class CaptionedImage(Template):
     def __init__(self, canvas_size, image: Image.Image, font, font_size, color, top_text, bottom_text):
         self.canvas_size = canvas_size
         self.image = image
@@ -125,11 +125,12 @@ class TopBottomTextWithCenterImage(Template):
     @property
     def design(self):
         image_components = []
+        image = self.image.resize((int(self.canvas_size[0]*0.8), int(self.canvas_size[1]*0.8)))
         image_component = ir.ImageComponent(
-            image=self.image,
+            image=image,
             position=(
-                self.canvas_size[0]//2 - self.image.width//2,
-                self.canvas_size[1]//2 - self.image.height//2
+                self.canvas_size[0]//2 - image.width//2,
+                self.canvas_size[1]//2 - image.height//2
             ),
         )
         image_components.append(image_component)
@@ -139,23 +140,25 @@ class TopBottomTextWithCenterImage(Template):
         )
 
         text_components = []
-        top_text_component = ir.TextComponent(
-            position=(self.canvas_size[0]//2, self.canvas_size[1]//2 - self.image.height//2 - self.font_size * 0.6),
-            text=self.top_text,
-            font_family=self.font,
-            font_size=self.font_size,
-            fill=self.color,
-        )
-        text_components.append(top_text_component)
+        if self.top_text:
+            top_text_component = ir.TextComponent(
+                position=(self.canvas_size[0]//2, self.canvas_size[1]*0.1),
+                text=self.top_text,
+                font_family=self.font,
+                font_size=self.font_size,
+                fill=self.color,
+            )
+            text_components.append(top_text_component)
 
-        bottom_text_component = ir.TextComponent(
-            position=(self.canvas_size[0]//2, self.canvas_size[1]//2 + self.image.height//2 + self.font_size * 1.2),
-            text=self.bottom_text,
-            font_family=self.font,
-            font_size=self.font_size,
-            fill=self.color,
-        )
-        text_components.append(bottom_text_component)
+        if self.bottom_text:
+            bottom_text_component = ir.TextComponent(
+                position=(self.canvas_size[0]//2, self.canvas_size[1]*0.9),
+                text=self.bottom_text,
+                font_family=self.font,
+                font_size=self.font_size,
+                fill=self.color,
+            )
+            text_components.append(bottom_text_component)
 
         text_layer = ir.Layer(
             position=(0, 0),
@@ -179,6 +182,7 @@ class GridCollage(Template):
         ys = np.linspace(0, self.canvas_size[1], self.grid_y + 1)
         for i, image in enumerate(self.images):
             position = (xs[i % self.grid_x], ys[i // self.grid_x])
+            image = image.resize((self.canvas_size[0] // self.grid_x, self.canvas_size[1] // self.grid_y))
             image_components.append(ir.ImageComponent(image, position))
 
         image_layer = ir.Layer(
@@ -210,7 +214,7 @@ if __name__ == "__main__":
     image = Image.new("RGB", (200, 200), (255, 245, 245))
     object = Image.new("RGB", (100, 100), "yellow")
     image.paste(object, (50, 50))
-    t4 = TopBottomTextWithCenterImage((500, 500), image, "playball", 92, (255, 215, 0), "I Love", "Eggs")
+    t4 = CaptionedImage((500, 500), image, "playball", 92, (255, 215, 0), "I Love", "Eggs")
     t4.save_svg(save_path)
 
     save_path = os.path.join("out", "template_test_5.svg")
