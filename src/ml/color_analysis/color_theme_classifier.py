@@ -207,7 +207,8 @@ class CIELabColorThemeClassifier:
         flow[row_ind, col_ind] = 1
 
         nearest_colors = flow @ q
-        dist = np.sum(cost_matrix[row_ind, col_ind])
+        pairwise_costs = cost_matrix[row_ind, col_ind]
+        dist = np.sum(pairwise_costs)
         return dist, nearest_colors
 
     @staticmethod
@@ -283,6 +284,14 @@ class CIELabColorThemeClassifier:
             "color_tags": row["color_tags"],
             "other_tags": row["other_tags"],
         })
+
+    def get_k_nearest_palettes(palette, k=1):
+        cielab_distances_df = CIELabColorThemeClassifier.compute_distances(
+            palettes.rgb_array_palette_to_cielab_array(palette)
+        )
+        cielab_min = cielab_distances_df.nsmallest(k, "dist")["nearest_colors"]
+        cielab_min = cielab_min.apply(lambda x: (skimage.color.lab2rgb(x) * 255).astype(np.uint8).reshape(1, -1, 3))
+        return cielab_min
 
 
 if __name__ == "__main__":

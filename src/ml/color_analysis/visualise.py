@@ -100,11 +100,7 @@ def show_data_2(image: Image.Image) -> plt.Figure:
 
     # CIELab
     cielab_kmeans_colors = CIELabColorThemeClassifier.extract_colors(image)
-    cielab_distances_df = CIELabColorThemeClassifier.compute_distances(
-        palettes.rgb_array_palette_to_cielab_array(cielab_kmeans_colors)
-    )
-    cielab_min = cielab_distances_df.nsmallest(N, "dist")["nearest_colors"]
-    cielab_min = cielab_min.apply(lambda x: (skimage.color.lab2rgb(x) * 255).astype(np.uint8).reshape(1, -1, 3))
+    cielab_min = CIELabColorThemeClassifier.get_k_nearest_palettes(cielab_kmeans_colors, k=N)
 
     print(rgb_min)
     print(cielab_min)
