@@ -1,3 +1,4 @@
+import itertools
 import os
 import time
 import sqlite3
@@ -136,15 +137,7 @@ def evaluate_model(model: TshirtDesignSegmentationModel, df: pd.DataFrame, show=
     return {"iou": iou_scores, "miou": miou_scores, "times": time_scores}
 
 
-def conduct_evaluation(df: pd.DataFrame, show=False):
-    seg_models: list[TshirtDesignSegmentationModel] = [
-        NoSegmentation(),
-        FixedSegmentation(),
-        ContourSegmentation(),
-        EntropySegmentation(),
-        SegformerB3ClothesSegmentation(),
-    ]
-
+def conduct_evaluation(seg_models, df: pd.DataFrame, show=False):
     for model in seg_models:
         result = evaluate_model(model, df)
         print_result(model, result)
@@ -234,8 +227,48 @@ def get_validation_df():
     return df
 
 
+def contour_hyperparam_search(validation_df):
+    base_model = ContourSegmentation
+    size_values = [16, 32, 64, 128, 256]
+    centrality_values = np.linspace(0.4, 1, 6)
+    min_dim_values = np.linspace(0.1, 0.4, 4)
+
+    results = dict()
+
+    for params in itertools.product(size_values, centrality_values, min_dim_values):
+        size, centrality, min_dim = params
+        model = base_model(size, centrality, min_dim, min_dim)
+        
+        validation_results = evaluate_model(model, validation_df)
+        miou_result = np.mean(validation_results["miou"])
+        results[params] = miou_result
+        print(f"Params: {params}")
+        print(f"MIoU: {miou_result}")
+    
+    best_params = max(results, key=results.get)
+    max_miou = results[best_params]
+    print(f"Best validation test results:")
+    print(f"Params: {best_params}")
+    print(f"MIoU: {max_miou}")
+    return best_params
+
+
 if __name__ == "__main__":
     validation_df = get_validation_df()
-    #test_df = get_test_df()
-    #print(test_df)
-    conduct_evaluation(validation_df)
+    params = contour_hyperparam_search(validation_df)
+    
+    test_df = get_test_df()
+    conduct_evaluation(
+        seg_models=[ContourSegmentation(params[0], params[1], params[2], params[2])],
+        df=test_df,
+        show=True
+    )
+
+    #seg_models: list[TshirtDesignSegmentationModel] = [
+    #    NoSegmentation(),
+    #    FixedSegmentation(),
+    #    ContourSegmentation(),
+    #    EntropySegmentation(),
+    #    SegformerB3ClothesSegmentation(),
+    #]
+    #conduct_evaluation(validation_df)
