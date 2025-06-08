@@ -1,4 +1,6 @@
+import os
 import time
+import sqlite3
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -15,7 +17,7 @@ from src.ml.tshirt_design_segmentation.segmentation import (
     SegformerB3ClothesSegmentation,
     TshirtDesignSegmentationModel
 )
-from src.common import utils
+from src.common import utils, config
 
 
 def rect_intersect(rect1: tuple, rect2: tuple) -> tuple:
@@ -51,7 +53,7 @@ def modified_iou(rect1, rect2_inner, rect2_outer) -> float:
     """
     returns |A intersect B|/|(A-(A intersect C)) union B| for B <= C
     """
-    print("Inside miou", rect1, rect2_inner, rect2_outer)
+    # print("Inside miou", rect1, rect2_inner, rect2_outer)
     in_intersect_out = rect_intersect(rect2_inner, rect2_outer)
     if in_intersect_out != rect2_inner:
         print("Found label violating B <= C! Shrinking B to B intersect C.")
@@ -94,6 +96,46 @@ def label():
     utils.save_data(tshirt_df, image_df_path)
 
 
+def evaluate_model(model: TshirtDesignSegmentationModel, df: pd.DataFrame, show=False):
+    print(f"Evaluating {model}...")
+    iou_scores = []
+    miou_scores = []
+    time_scores = []
+
+    for i, row in df.iterrows():
+        print(i)
+        url = row["image_url"]
+        image = utils.get_image_from_url(url).convert("RGB")
+
+        x,y,w,h = actual_bbox = tuple(row[["left_in","top_in","width_in","height_in"]])
+        xr,yr,wr,hr = relaxed_bbox = tuple(row[["left_out","top_out","width_out","height_out"]])
+
+        start_time = time.perf_counter()
+        xe1,ye1,xe2,ye2 = extracted_bbox = model.extract_design_bbox(image)  # (x1,y1,x2,y2) form
+        end_time = time.perf_counter()
+        
+        iou_score = iou((xe1, ye1, xe2-xe1, ye2-ye1), actual_bbox)
+        iou_scores.append(iou_score)
+        
+        miou_score = modified_iou((xe1, ye1, xe2-xe1, ye2-ye1), actual_bbox, relaxed_bbox)
+        miou_scores.append(miou_score)
+
+        duration = end_time - start_time
+        time_scores.append(duration)
+
+        if show:
+            draw = ImageDraw.Draw(image.copy())
+            draw.rectangle((x,y,x+w,y+h), outline="red", width=3)
+            draw.rectangle((xr,yr,xr+wr,yr+hr), outline="green", width=3)
+            draw.rectangle(extracted_bbox, outline="blue", width=3)
+            print(model.__class__)
+            draw._image.show()
+            model.extract_design(image).show()
+            input("next: press enter")
+
+    return {"iou": iou_scores, "miou": miou_scores, "times": time_scores}
+
+
 def conduct_evaluation(df: pd.DataFrame, show=False):
     seg_models: list[TshirtDesignSegmentationModel] = [
         NoSegmentation(),
@@ -102,70 +144,47 @@ def conduct_evaluation(df: pd.DataFrame, show=False):
         EntropySegmentation(),
         SegformerB3ClothesSegmentation(),
     ]
-    iou_scores = [[] for _ in seg_models]
-    miou_scores = [[] for _ in seg_models]
-    times = [[] for _ in seg_models]
 
-    for i, row in df.iterrows():
-        print(i)
-        url = row["image_url"]
-        image = utils.get_image_from_url(url).convert("RGB")
-
-        for j, model in enumerate(seg_models):
-            x,y,w,h = actual_bbox = tuple(row[["left_in","top_in","width_in","height_in"]])
-            xr,yr,wr,hr = relaxed_bbox = tuple(row[["left_out","top_out","width_out","height_out"]])
-
-            start_time = time.perf_counter()
-            xe1,ye1,xe2,ye2 = extracted_bbox = model.extract_design_bbox(image)  # (x1,y1,x2,y2) form
-            end_time = time.perf_counter()
-
-            if show:
-                draw = ImageDraw.Draw(image.copy())
-                draw.rectangle((x,y,x+w,y+h), outline="red", width=3)
-                draw.rectangle((xr,yr,xr+wr,yr+hr), outline="green", width=3)
-                draw.rectangle(extracted_bbox, outline="blue", width=3)
-                print(model.__class__)
-                draw._image.show()
-                model.extract_design(image).show()
-                input("next: press enter")
-            
-            iou_score = iou((xe1, ye1, xe2-xe1, ye2-ye1), actual_bbox)
-            iou_scores[j].append(iou_score)
-            
-            miou_score = modified_iou((xe1, ye1, xe2-xe1, ye2-ye1), actual_bbox, relaxed_bbox)
-            miou_scores[j].append(miou_score)
-
-            duration = end_time - start_time
-            times[j].append(duration)
-
-    for model, miou_data, iou_data, time_data in zip(seg_models, miou_scores, iou_scores, times):
-        print("-"*80)
-        print(model.__class__.__name__)
-        print(f"IoU scores:")
-        print(iou_data)
-        print()
-        print(f"MIoU scores:")
-        print(miou_data)
-        print()
-        print("Times:")
-        print(time_data)
-        print()
-        print(f"Mean IoU score: {np.mean(iou_data)}")
-        print(f"Mean MIoU score: {np.mean(miou_data)}")
-        print(f"Mean execution time: {np.mean(time_data)}")
-        print("-"*80)
-        if False:
-            plt.hist(miou_data, bins=8, density=True)
-            plt.xlabel("MIoU")
-            plt.ylabel("Frequency Density")
-            plt.title(model.__class__.__name__)
-            plt.show()
+    for model in seg_models:
+        result = evaluate_model(model, df)
+        print_result(model, result)
+        if show:
+            plot_histogram(model, result)
 
 
-if __name__ == "__main__":
-    import sqlite3
-    from src.common import config
+def print_result(model, result):
+    iou_data = result["iou"]
+    miou_data = result["miou"]
+    time_data = result["times"]
+    print("-"*80)
+    print(model.__class__.__name__)
+    print(f"IoU scores:")
+    print(iou_data)
+    print()
+    print(f"MIoU scores:")
+    print(miou_data)
+    print()
+    print("Times:")
+    print(time_data)
+    print()
+    print(f"Mean IoU score: {np.mean(iou_data)}")
+    print(f"Mean MIoU score: {np.mean(miou_data)}")
+    print(f"Mean execution time: {np.mean(time_data)}")
+    print("-"*80)
 
+
+def plot_histogram(model, result):
+    miou_data = result["miou"]
+    plt.hist(miou_data, bins=10, density=True)
+    plt.xlabel("MIoU")
+    plt.xlim(left=0, right=1)
+    plt.ylabel("Frequency Density")
+    plt.title(model.__class__.__name__)
+    plt.show()
+
+
+def get_test_df():
+    print("Fetching Test DataFrame...")
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
@@ -186,6 +205,37 @@ if __name__ == "__main__":
     rows = result.fetchall()
     columns = [d[0] for d in result.description]
     df = pd.DataFrame(rows, columns=columns)
-    print(df)
 
-    conduct_evaluation(df)
+    df["image"] = df["image_url"].apply(lambda x: utils.get_image_from_url(x).convert("RGB"))
+    print("Complete.")
+    return df
+
+
+def get_validation_df():
+    print("Fetching Validation DataFrame...")
+    image_df_path = os.path.join("data", "dataframes", "labelled_image_bboxs", "labelled_image_bboxs.pickle")
+    df = utils.load_data(image_df_path)
+    df = df.rename(columns={
+        "img_url": "image_url",
+        "x": "left_in",
+        "y": "top_in",
+        "w": "width_in",
+        "h": "height_in",
+        "xr": "left_out",
+        "yr": "top_out",
+        "wr": "width_out",
+        "hr": "height_out"
+    }).dropna()
+    df[["left_out", "top_out", "width_out", "height_out"]] = df[["left_out", "top_out", "width_out", "height_out"]].astype(int)
+    df = df[(df[["width_in", "height_in", "width_out", "height_out"]] != 0).any(axis=1)].reset_index(drop=True)
+
+    df["image"] = df["image_url"].apply(lambda x: utils.get_image_from_url(x).convert("RGB"))
+    print("Complete.")
+    return df
+
+
+if __name__ == "__main__":
+    validation_df = get_validation_df()
+    #test_df = get_test_df()
+    #print(test_df)
+    conduct_evaluation(validation_df)
