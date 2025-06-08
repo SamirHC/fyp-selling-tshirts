@@ -7,7 +7,7 @@ from src.ml.genai import image_gen, text_gen
 from src.design_generation import generate
 
 
-def get_tags_title_colours(cursor: sqlite3.Cursor) -> list[str]:
+def get_tags_title_colours(cursor: sqlite3.Cursor, colour_tags=True) -> list[str]:
     source, item_id, title = cursor.execute("""
         SELECT source, item_id, title FROM clothes
         WHERE EXISTS (
@@ -19,8 +19,10 @@ def get_tags_title_colours(cursor: sqlite3.Cursor) -> list[str]:
     tags = [
         x[0] for x in cursor.execute("""
             SELECT tag FROM print_design_tags
-            WHERE source=? AND design_id=?
-        """, (source, item_id)).fetchall()
+            JOIN palette_tags
+            ON print_design_tags.tag = palette_tags.name
+            WHERE source=? AND design_id=? AND is_colour_tag=?
+        """, (source, item_id, int(colour_tags))).fetchall()
     ]
     colours = [x[0] for x in cursor.execute("""
         SELECT colour FROM print_design_nearest_palette

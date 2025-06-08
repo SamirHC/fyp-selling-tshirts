@@ -1,7 +1,7 @@
-from src.common import constants
+from src.common import constants, image_edit
 from src.data_collection import palettes
 from src.design_generation import internal_repr as ir
-from src.design_generation.template import TopBottomTextWithCenterImage
+from src.design_generation.template import CaptionedImage
 from src.design_generation import font_select
 from src.ml.genai import image_gen, text_gen
 
@@ -13,22 +13,22 @@ def create_prompt_for_image_prompt(tags, title, text_model: text_gen.TextModel):
     )
     if title:
         prompt_gen_prompt += (
-            " where the nouns of the image are inspired from the contents of a "
-            f"Tshirt print design titled {title}. Do not use too many different nouns, keep it simple. "
+            " where the contents of the image are inspired from the contents of a "
+            f"Tshirt print design titled {title}. Keep it simple, only use up to 3 nouns. "
         )
     else:
         "where the nouns of the image are determined appropriately based on the colour/style tags."
-    prompt_gen_prompt += " DO NOT REQUEST IN THE PROMPT TO PRODUCE TEXT."
+    prompt_gen_prompt += " DO NOT REQUEST IN THE PROMPT TO PRODUCE TEXT. DO NOT INCLUDE WORDS RELATING TO TSHIRTS"
 
     return text_model.generate_text(prompt_gen_prompt)
 
 
-def create_prompt_for_image(tags, title, text_model, colours):
+def create_prompt_for_image(tags, title, text_model, colours=None):
     # Prompt Generating Prompt
     content_prompt = create_prompt_for_image_prompt(tags, title, text_model)
 
     # Image Generating Prompt
-    prompt = f"Create a T-shirt print design graphic, centered, transparent background, no text"
+    prompt = f"Vector design centered, no background"
     if colours:
         prompt += f", using the colours ({",".join(colours)})"
     prompt += f": {content_prompt}"
@@ -51,7 +51,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     )
 
     # Prompt Information
-    prompt = create_prompt_for_image(tags, title, text_model, colours)
+    prompt = create_prompt_for_image(tags, title, text_model)#, colours)
     print(f"Tags: {tags}")
     print(f"Colours: {colours}")
     print(f"Title: {title}")
@@ -61,6 +61,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     image = image_model.generate_image(
         prompt=prompt
     ).resize((256, 256))
+    image = image_edit.remove_bg(image)
 
     # Font Selection
     font = font_select.select_font(prompt, image)
@@ -73,14 +74,14 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     #  - Create slogan and split
     #  - Choose font based on tags
     #  - Choose color based on bg color for readability
-    design = TopBottomTextWithCenterImage(
+    design = CaptionedImage(
         canvas_size=(512, 512),
         image=image,
         font=font,
         font_size=72,
         color=(constants.Color.BLACK if not colours else palettes.hex_to_rgb(colours[0])),
-        top_text="Good",
-        bottom_text="Vibes",
+        top_text="",
+        bottom_text="",
     ).design
 
     return design
