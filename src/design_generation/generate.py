@@ -1,4 +1,7 @@
+from datetime import datetime
+import os
 import sqlite3
+from PIL import Image
 
 from src.common import constants, image_edit, config
 from src.data_collection import palettes
@@ -6,6 +9,38 @@ from src.design_generation import internal_repr as ir
 from src.design_generation.template import CaptionedImage
 from src.design_generation import font_select
 from src.ml.genai import image_gen, text_gen
+from src.ml.color_analysis.color_theme_classifier import CIELabColorThemeClassifier
+
+
+def add_to_population(clothes_key, image_no_bg: Image.Image, prompt):
+    print("Adding to population...")
+    # Save image file
+    filename = f"generate_{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.png"
+    image_path = os.path.join("data", "ea_population", filename)
+    image_no_bg.save(image_path)
+
+    # Colour Analysis
+    palette_data = CIELabColorThemeClassifier.get_palette_data(image_no_bg)
+    palette_id = palette_data["row_idx"]
+    palette_dist = palette_data["dist"]
+    colour_score = 0 if palette_dist > 40 else (1 - palette_dist / 40)
+
+    # Temp
+    prompt_score = -1
+    aesthetic_score = -1
+
+    conn = sqlite3.connect(config.DB_PATH)
+    cursor = conn.cursor()
+    query = """
+        INSERT INTO evaluate_generations (image_path, source, item_id, prompt, palette_id, palette_distance, colour_score, prompt_score, aesthetic_score)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+    params = (filename, *clothes_key, prompt, palette_id, palette_dist, colour_score, prompt_score, aesthetic_score)
+    print(params)
+    cursor.execute(query, params)
+    conn.commit()
+    conn.close()
+    print("Done.")
 
 
 def create_prompt_for_image_prompt(tags, title, text_model: text_gen.TextModel):
@@ -36,7 +71,7 @@ def create_prompt_for_image(tags, title, text_model, colours=None):
     prompt += f": {content_prompt}"
     prompt += " DO NOT INCLUDE TEXT IN THE IMAGE, DO NOT INCLUDE ANY CLOTHING, ONLY EXTRACT THE FULL PRINT DESIGN."
 
-    return prompt
+    return prompt, content_prompt
 
 
 def generate_design(tags: list[str], **kwargs) -> ir.Design:
@@ -44,6 +79,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
         tags += ["minimalist", "vintage"]
     title: str = kwargs.get("title", None)
     colours: list[str] = kwargs.get("colours", None)
+    clothes_key: tuple[str, str] = kwargs.get("clothes_key", None)
 
     text_model: text_gen.TextModel = (
         kwargs.get("text_model", text_gen.DummyLLM())
@@ -53,7 +89,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     )
 
     # Prompt Information
-    prompt = create_prompt_for_image(tags, title, text_model)#, colours)
+    prompt, content_prompt = create_prompt_for_image(tags, title, text_model)#, colours)
     print(f"Tags: {tags}")
     print(f"Colours: {colours}")
     print(f"Title: {title}")
@@ -63,14 +99,17 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     image = image_model.generate_image(
         prompt=prompt
     ).resize((256, 256))
-    image = image_edit.remove_bg(image)
+    image_no_bg = image_edit.remove_bg(image)
+    image_no_bg = image_edit.crop_to_content(image_no_bg)
+
+    # Save generation to population
+    add_to_population(clothes_key, image_no_bg, content_prompt)
 
     # Font Selection
     font = font_select.select_font(prompt, image)
 
     # Get a batch of prompts and images, and compute fitness
     # Fitness: minimises colour palette distance
-    #          minimises mask occurence when using segformerb3 model
     #          scores highly 
     # TODO:
     #  - Create slogan and split
@@ -78,7 +117,7 @@ def generate_design(tags: list[str], **kwargs) -> ir.Design:
     #  - Choose color based on bg color for readability
     design = CaptionedImage(
         canvas_size=(512, 512),
-        image=image,
+        image=image_no_bg,
         font=font,
         font_size=72,
         color=(constants.Color.BLACK if not colours else palettes.hex_to_rgb(colours[0])),
@@ -112,14 +151,14 @@ def get_tags_title_colours(cursor: sqlite3.Cursor, colour_tags=True) -> list[str
         WHERE source=? AND design_id=?
     """, (source, item_id)).fetchall()]
 
-    return tags, title, colours
+    return tags, title, colours, source, item_id
 
 
 def generate_random_design_from_db() -> ir.Design:
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
 
-    tags, title, colours = get_tags_title_colours(cursor)
+    tags, title, colours, source, item_id = get_tags_title_colours(cursor)
 
     conn.close()
 
@@ -136,5 +175,6 @@ def generate_random_design_from_db() -> ir.Design:
         "image_model": image_model,
         "title": title,
         "colours": colours,
+        "clothes_key": (source, item_id)
     })
     return design

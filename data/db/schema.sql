@@ -115,3 +115,19 @@ CREATE TABLE IF NOT EXISTS "evaluate_palette_tag_matching" (
 	PRIMARY KEY("source","item_id"),
 	FOREIGN KEY("source", "item_id") REFERENCES "clothes"("source", "item_id")
 );
+
+--DROP TABLE IF EXISTS "evaluate_generations";
+
+CREATE TABLE IF NOT EXISTS "evaluate_generations" (
+  "image_path" TEXT,
+  "source" TEXT,
+  "item_id" TEXT,
+  "prompt" TEXT,
+  "palette_id" INTEGER,
+  "palette_distance" FLOAT,
+  "colour_score" FLOAT,
+  "prompt_score" FLOAT,
+  "aesthetic_score" FLOAT,
+  PRIMARY KEY("image_path")
+  FOREIGN KEY("source", "item_id") REFERENCES "clothes"("source", "item_id")
+);
