@@ -48,6 +48,28 @@ class DeepSeekLLM(TextModel):
         return completion.choices[0].message.content
 
 
+class GPT4LLM(TextModel):
+    def __init__(self):
+        self.client = OpenAI(
+            api_key=config.OPENAI_API_KEY,
+        )
+
+    def generate_text(self, prompt=""):
+        completion = self.client.chat.completions.create(
+        model="gpt-4.1",
+        messages=[
+            {"role":"system",
+             "content": "WHEN GENERATING YOUR ANSWER, DO NOT INCLUDE EXPLANATIONS, JUSTIFICATIONS OR EXTRA OUTPUT. ONLY ANSWER EXACTLY WHAT IS ASKED."
+            },
+            {
+            "role": "user",
+            "content": prompt,
+            }
+        ])
+
+        return completion.choices[0].message.content
+
+
 if __name__ == "__main__":
     slogan = RandomSloganModel().generate_text()
 

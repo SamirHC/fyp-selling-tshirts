@@ -46,7 +46,7 @@ def add_to_population(clothes_key, image_no_bg: Image.Image, prompt):
 def create_prompt_for_image_prompt(tags, title, text_model: text_gen.TextModel):
     prompt_gen_prompt = (
         "Return ONLY a Python string of a well-crafted prompt for a generative AI model "
-        f"using the tags ({",".join(tags)}) only to emphasise the colour themes, not the content."
+        f"using the tags ({",".join(tags)}) to modify nouns"
     )
     if title:
         prompt_gen_prompt += (
@@ -69,7 +69,7 @@ def create_prompt_for_image(tags, title, text_model, colours=None):
     if colours:
         prompt += f", using the colours ({",".join(colours)})"
     prompt += f": {content_prompt}"
-    prompt += " DO NOT INCLUDE TEXT IN THE IMAGE, DO NOT INCLUDE ANY CLOTHING, ONLY EXTRACT THE FULL PRINT DESIGN."
+    prompt += " DO NOT INCLUDE TEXT IN THE IMAGE. KEEP IT SIMPLE"
 
     return prompt, content_prompt
 
@@ -168,7 +168,7 @@ def generate_random_design_from_db() -> ir.Design:
     elif config.GPU == 1:
         image_model = image_gen.StableDiffusion1_5_Txt2ImgModel()
 
-    text_model = text_gen.DeepSeekLLM()
+    text_model = text_gen.GPT4LLM()  # text_gen.DeepSeekLLM()
 
     design = generate_design(tags, **{
         "text_model": text_model,
