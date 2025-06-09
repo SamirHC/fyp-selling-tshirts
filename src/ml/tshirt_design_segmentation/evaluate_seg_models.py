@@ -254,8 +254,9 @@ def contour_hyperparam_search(validation_df):
 
 
 if __name__ == "__main__":
+    """
     validation_df = get_validation_df()
-    params = contour_hyperparam_search(validation_df)
+    #params = contour_hyperparam_search(validation_df)
     
     test_df = get_test_df()
     conduct_evaluation(
@@ -263,12 +264,12 @@ if __name__ == "__main__":
         df=test_df,
         show=True
     )
-
-    #seg_models: list[TshirtDesignSegmentationModel] = [
-    #    NoSegmentation(),
-    #    FixedSegmentation(),
-    #    ContourSegmentation(),
-    #    EntropySegmentation(),
-    #    SegformerB3ClothesSegmentation(),
-    #]
-    #conduct_evaluation(validation_df)
+    """
+    seg_models: list[TshirtDesignSegmentationModel] = [
+        NoSegmentation(),
+        FixedSegmentation(),
+        ContourSegmentation(),
+        EntropySegmentation(),
+        SegformerB3ClothesSegmentation(),
+    ]
+    conduct_evaluation(seg_models, get_test_df(), show=True)
