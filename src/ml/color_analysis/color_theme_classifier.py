@@ -164,7 +164,7 @@ class CIELabColorThemeClassifier:
             values of the four dominant colors found in the image.
         """
 
-        pixels = np.array(image).reshape(-1, 3)
+        pixels = np.array(image.convert("RGB")).reshape(-1, 3)
         cielab_pixels = skimage.color.rgb2lab(pixels / 255)
 
         num_colors = 4
