@@ -60,6 +60,33 @@ def get_palette_data_db() -> pd.DataFrame:
     return df
 
 
+def get_palette_data_by_id(cursor: sqlite3.Cursor, palette_id: int) -> pd.Series:
+    main_query = "SELECT likes, submission_date, color_hunt_id FROM palettes WHERE id=?"
+    result = cursor.execute(main_query, (palette_id,)).fetchone()
+    likes, submission_date, color_hunt_id = result
+
+    colour_query = "SELECT colour FROM palette_colours WHERE palette_id=?"
+    colours = [x[0] for x in cursor.execute(colour_query, (palette_id,)).fetchall()]
+
+    tag_query = """
+        SELECT tag FROM palette_tag_associations
+            JOIN palette_tags ON palette_tag_associations.tag=palette_tags.name
+        WHERE palette_id=? AND is_colour_tag=?
+    """
+    colour_tags = [x[0] for x in cursor.execute(tag_query, (palette_id, 1)).fetchall()]
+    other_tags = [x[0] for x in cursor.execute(tag_query, (palette_id, 0)).fetchall()]
+
+    return pd.Series({
+        "palette_id": palette_id,
+        "colors": colours,
+        "likes": likes,
+        "color_tags": colour_tags,
+        "other_tags": other_tags,
+        "date": submission_date,
+        "url": f"https://colorhunt.co/palette/{color_hunt_id}"
+    })
+
+
 def hex_to_rgb(hex: str) -> tuple[int, int, int]:
     hex = hex.lstrip('#')
     return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
