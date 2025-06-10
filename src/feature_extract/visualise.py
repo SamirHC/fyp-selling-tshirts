@@ -157,17 +157,33 @@ def evaluate_palette_tag_matching(key, cursor: sqlite3.Cursor):
         VALUES (?,?,?,?,?);
     """, (*key, colour_match_count, tag_true_positive, tag_false_positive))
 
-
-if __name__ == "__main__":
-    import random
-    conn = sqlite3.connect(config.DB_PATH)
-    cursor = conn.cursor()
-
+def visualise_all_clothes(cursor: sqlite3.Cursor):
     keys = get_visualisable_clothes_keys(cursor)
     random.shuffle(keys)
     for key in keys:
         visualise_item_results(key, cursor)
         #evaluate_palette_tag_matching(key, cursor)
         #conn.commit()
+
+
+def show_average_palette_distance_data(cursor: sqlite3.Cursor):
+    query = """
+        SELECT distance FROM print_design_nearest_palette
+    """
+    distances = np.array([x[0] for x in cursor.execute(query).fetchall()])
+    print(f"Mean distance: {np.mean(distances)}")
+    print(f"Number of palettes: {len(distances)}")
+    plt.hist(distances, bins=50)
+    plt.xlabel("Palette Distance")
+    plt.ylabel("Frequency")
+    plt.show()
+
+
+if __name__ == "__main__":
+    import random
+    conn = sqlite3.connect(config.DB_PATH)
+    cursor = conn.cursor()
+
+    show_average_palette_distance_data(cursor)
 
     conn.close()
