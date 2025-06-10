@@ -130,4 +130,5 @@ CREATE TABLE IF NOT EXISTS "evaluate_generations" (
   "aesthetic_score" FLOAT,
   PRIMARY KEY("image_path")
   FOREIGN KEY("source", "item_id") REFERENCES "clothes"("source", "item_id")
+  FOREIGN KEY("palette_id") REFERENCES "palettes" ("id")
 );
