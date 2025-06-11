@@ -86,9 +86,33 @@ def visualise(row: pd.Series, cursor: sqlite3.Cursor):
     plt.show()
 
 
+def show_score_hist(cursor: sqlite3.Cursor):
+    scores = cursor.execute(
+        """SELECT colour_score, prompt_score, aesthetic_score FROM evaluate_generations"""
+    ).fetchall()
+    colour_scores, prompt_scores, aesthetic_scores = zip(*scores)
+    
+    fig, axs = plt.subplots(1, 3)
+    axs[0].hist(colour_scores, bins=6)
+    axs[0].set_xlabel("Colour Score")
+    axs[0].set_ylabel("Frequency")
+    axs[1].hist(prompt_scores, bins=6)
+    axs[1].set_xlabel("Prompt Score")
+    axs[2].hist(aesthetic_scores, bins=6)
+    axs[2].set_xlabel("Aesthetic Score")
+
+    plt.show()
+
+    print(f"colour_score: mean={np.mean(colour_scores)}")
+    print(f"prompt_scores: mean={np.mean(prompt_scores)}")
+    print(f"aesthetic_scores: mean={np.mean(aesthetic_scores)}")
+
+
 def main():
     conn = sqlite3.connect(config.DB_PATH)
     cursor = conn.cursor()
+
+    show_score_hist(cursor)
 
     df = get_df(cursor)
     print(df)
