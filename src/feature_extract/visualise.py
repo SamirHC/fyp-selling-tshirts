@@ -185,5 +185,6 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     show_average_palette_distance_data(cursor)
+    visualise_all_clothes(cursor)
 
     conn.close()
