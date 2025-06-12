@@ -7,7 +7,7 @@ if __name__ == "__main__":
     import os
     import webbrowser
 
-    for i in range(3):
+    for i in range(10):
         design = generate.generate_random_design_from_db()
 
         out_path = os.path.join("out", f"main {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.svg")

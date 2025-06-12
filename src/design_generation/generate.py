@@ -45,16 +45,14 @@ def add_to_population(clothes_key, image_no_bg: Image.Image, prompt):
 
 def create_prompt_for_image_prompt(tags, title, text_model: text_gen.TextModel):
     prompt_gen_prompt = (
-        "Return ONLY a Python string of a well-crafted prompt for a generative AI model "
+        f"Return ONLY a Python string of a well-crafted prompt for DALLE3 "
         f"using the tags ({",".join(tags)}) to modify nouns"
     )
     if title:
         prompt_gen_prompt += (
             " where the contents of the image are inspired from the contents of a "
-            f"Tshirt print design titled {title}. Keep it simple, only use up to 3 nouns. "
+            f"Tshirt print design titled '{title}'. Choose a concrete object in the title for the central image."
         )
-    else:
-        "where the nouns of the image are determined appropriately based on the colour/style tags."
     prompt_gen_prompt += " DO NOT REQUEST IN THE PROMPT TO PRODUCE TEXT. DO NOT INCLUDE WORDS RELATING TO TSHIRTS"
 
     return text_model.generate_text(prompt_gen_prompt)
@@ -65,11 +63,11 @@ def create_prompt_for_image(tags, title, text_model, colours=None):
     content_prompt = create_prompt_for_image_prompt(tags, title, text_model)
 
     # Image Generating Prompt
-    prompt = f"Vector design centered, no background"
+    prompt = f"Vector [grunge/minimalist/vintage/line art/psychedelic etc] style design, centered, no background"
     if colours:
         prompt += f", using the colours ({",".join(colours)})"
     prompt += f": {content_prompt}"
-    prompt += " DO NOT INCLUDE TEXT IN THE IMAGE. KEEP IT SIMPLE"
+    prompt += " DO NOT INCLUDE TEXT IN THE IMAGE."
 
     return prompt, content_prompt
 
